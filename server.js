@@ -5,6 +5,7 @@ const {
 	v4: uuidv4
 } = require('uuid');
 
+const mustache = require('mustache-express');
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
@@ -34,6 +35,11 @@ connection.connect((err) => {
 
 app.set('view', __dirname + "/views");
 app.use(express.static(__dirname + "/public"));
+
+app.set('views', __dirname + "/views");
+app.set('view engine', 'mustache');
+app.engine('mustache', mustache());
+
 app.use(bodyParser.urlencoded({
 	extended: false
 }));

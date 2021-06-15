@@ -1,0 +1,42 @@
+body {
+	background: white;
+}
+
+img {
+	position: absolute;
+	top: 15%;
+	left: 50%;
+	transform: translate(-50%, -15%) scale(0.4);
+}
+
+form {
+	width: 75%;
+	position: absolute;
+	top: 45%;
+	left: 50%;
+	transform: translate(-50%, -45%);
+}
+
+input {
+	width: 100%;
+	margin: 10px 0;
+	border: 2px #00a6a6 solid;
+	text-align: center;
+	transition: 1s ease;
+}
+
+input:focus {
+	outline: none;
+	border: 2px white solid;
+	transition: 1s ease;
+}
+
+input:invalid {
+	border: 2px #bd4881 solid;
+}
+
+#submission {
+	width: 80%;
+	left: 80%;
+	transform: translate(-50%, 0%);
+}

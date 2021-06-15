@@ -9,6 +9,7 @@ CREATE TABLE spark_user (
 	pin INT NOT NULL,
 	balance DOUBLE NOT NULL,
 	last_login DATETIME,
+	slack_id VARCHAR(255),
 	FOREIGN KEY (`camper_id`) REFERENCES registration.camper (`id`) ON DELETE CASCADE
 );
 
@@ -40,7 +41,7 @@ CREATE TABLE tx (
 	amount DOUBLE,
 	message TEXT,
 	tx_time DATETIME,
-	staffer_completion 
+	staffer_completion TINYINT,
 	FOREIGN KEY (`receiver_id`) REFERENCES spark_user (`camper_id`),
 	FOREIGN KEY (`sender_id`) REFERENCES spark_user (`camper_id`),
 	FOREIGN KEY (`inventory_item`) REFERENCES inventory (`id`),

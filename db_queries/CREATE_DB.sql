@@ -1,4 +1,7 @@
-USE registration;
+DROP DATABASE IF EXISTS sparkcoin;
+CREATE DATABASE sparkcoin;
+
+USE sparkcoin;
 
 CREATE TABLE spark_user (
 	camper_id INT NOT NULL,
@@ -6,7 +9,7 @@ CREATE TABLE spark_user (
 	pin INT NOT NULL,
 	balance DOUBLE NOT NULL,
 	last_login DATETIME,
-	FOREIGN KEY (`camper_id`) REFERENCES camper (`id`) ON DELETE CASCADE
+	FOREIGN KEY (`camper_id`) REFERENCES registration.camper (`id`) ON DELETE CASCADE
 );
 
 CREATE TABLE inventory (
@@ -17,7 +20,7 @@ CREATE TABLE inventory (
 	quantity INT,
 	active TINYINT,
 	PRIMARY KEY (id),
-	FOREIGN KEY (`camper_id`) REFERENCES camper(`id`)
+	FOREIGN KEY (`camper_id`) REFERENCES registration.camper(`id`)
 );
 
 CREATE TABLE raffle_item (
@@ -37,6 +40,7 @@ CREATE TABLE tx (
 	amount DOUBLE,
 	message TEXT,
 	tx_time DATETIME,
+	staffer_completion 
 	FOREIGN KEY (`receiver_id`) REFERENCES spark_user (`camper_id`),
 	FOREIGN KEY (`sender_id`) REFERENCES spark_user (`camper_id`),
 	FOREIGN KEY (`inventory_item`) REFERENCES inventory (`id`),

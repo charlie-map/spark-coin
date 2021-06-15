@@ -1,13 +1,21 @@
 require('dotenv').config({
 	path: __dirname + "/.env"
 });
-const express = require('express');
-const mustache = require('mustache-express');
-const bodyParser = require('body-parser');
 const {
 	v4: uuidv4
 } = require('uuid');
-const morgan = require('morgan');
+
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+const server = require('http').createServer(app);
+
+const io = require('socket.io')(server);
+
+const session = require('express-session');
+
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const mysql = require('mysql2');
 
@@ -23,13 +31,20 @@ connection.connect((err) => {
 	if (err) throw err;
 });
 
-const app = express();
-
+app.set('view', __dirname + "/views");
+app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({
 	extended: false
 }));
 
-app.set('views', __dirname + "/views");
-app.set('view engine', 'mustache');
-app.engine('mustache', mustache());
+app.get("/", (req, res) => {
+	res.sendFile(__dirname + "/views/initial.html");
+});
 
+io.on('connection', socket => {
+	console.log("connected");
+});
+
+server.listen(9988, () => {
+	console.log("server go vroom");
+});

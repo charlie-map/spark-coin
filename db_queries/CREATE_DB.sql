@@ -1,0 +1,42 @@
+USE registration;
+
+CREATE TABLE spark_user (
+	camper_id INT NOT NULL,
+	staffer TINYINT,
+	pin INT NOT NULL,
+	balance DOUBLE NOT NULL,
+	last_login DATETIME,
+	FOREIGN KEY (`camper_id`) REFERENCES camper (`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE inventory (
+	id INT AUTO_INCREMENT NOT NULL,
+	camper_id INT NOT NULL,
+	item_name VARCHAR(255) NOT NULL,
+	price DOUBLE NOT NULL,
+	quantity INT,
+	PRIMARY KEY (id),
+	FOREIGN KEY (`camper_id`) REFERENCES camper(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE raffle_item (
+	id INT AUTO_INCREMENT NOT NULL,
+	item_name VARCHAR(255) NOT NULL,
+	description TEXT,
+	image_url TEXT,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE tx (
+	receiver_id INT,
+	sender_id INT,
+	inventory_item INT,
+	raffle_item INT,
+	amount DOUBLE,
+	message TEXT,
+	tx_time DATETIME,
+	FOREIGN KEY (`receiver_id`) REFERENCES spark_user (`camper_id`),
+	FOREIGN KEY (`sender_id`) REFERENCES spark_user (`camper_id`),
+	FOREIGN KEY (`inventory_item`) REFERENCES inventory (`id`) ON DELETE CASCADE,
+	FOREIGN KEY (`raffle_item`) REFERENCES raffle_item (`id`) ON DELETE CASCADE
+);

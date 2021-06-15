@@ -22,3 +22,14 @@ const connection = mysql.createConnection({
 connection.connect((err) => {
 	if (err) throw err;
 });
+
+const app = express();
+
+app.use(bodyParser.urlencoded({
+	extended: false
+}));
+
+app.set('views', __dirname + "/views");
+app.set('view engine', 'mustache');
+app.engine('mustache', mustache());
+

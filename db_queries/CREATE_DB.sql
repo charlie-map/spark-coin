@@ -15,8 +15,9 @@ CREATE TABLE inventory (
 	item_name VARCHAR(255) NOT NULL,
 	price DOUBLE NOT NULL,
 	quantity INT,
+	active TINYINT,
 	PRIMARY KEY (id),
-	FOREIGN KEY (`camper_id`) REFERENCES camper(`id`) ON DELETE CASCADE
+	FOREIGN KEY (`camper_id`) REFERENCES camper(`id`)
 );
 
 CREATE TABLE raffle_item (
@@ -24,6 +25,7 @@ CREATE TABLE raffle_item (
 	item_name VARCHAR(255) NOT NULL,
 	description TEXT,
 	image_url TEXT,
+	active TINYINT,
 	PRIMARY KEY (id)
 );
 
@@ -37,6 +39,6 @@ CREATE TABLE tx (
 	tx_time DATETIME,
 	FOREIGN KEY (`receiver_id`) REFERENCES spark_user (`camper_id`),
 	FOREIGN KEY (`sender_id`) REFERENCES spark_user (`camper_id`),
-	FOREIGN KEY (`inventory_item`) REFERENCES inventory (`id`) ON DELETE CASCADE,
-	FOREIGN KEY (`raffle_item`) REFERENCES raffle_item (`id`) ON DELETE CASCADE
+	FOREIGN KEY (`inventory_item`) REFERENCES inventory (`id`),
+	FOREIGN KEY (`raffle_item`) REFERENCES raffle_item (`id`)
 );

@@ -113,6 +113,13 @@ input:invalid {
 	transition: left 1s ease;
 }
 
+.lightning-bolt-button {
+	font-family: 'Arial';
+	font-size: 20px;
+	margin-right: 10px;
+	transition: left 1s ease;
+}
+
 #balance_display {
 	font-size: 65px;
 	transition: 0.2s ease;
@@ -174,10 +181,65 @@ input:invalid {
 .inventory-popup h1 {
 	margin: 0;
 	left: 0px;
-	height: 8%;
+	height: 70px;
 	width: 80%;
 	text-align: center;
 	line-height: 200%;
+}
+
+.spark-logo-inventory {
+	margin: 4px;
+	display: inline-block;
+	width: 50px;
+	height: 50px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center top;
+}
+
+.inner-inventory {
+	margin-top: 10px;
+}
+
+.inner-inventory > div {
+	position: relative;
+	background: #f7e88f;
+	border-bottom: 1px #f7e88f solid;
+	width: 90%;
+	left: 5%;
+}
+
+.display-styling-inventory {
+	margin-top: 10px;
+	position: relative;
+	min-height: 50px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.purchase-item {
+	max-height: 50px;
+	margin: 5px;
+}
+
+.purchase-item > span.price {
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.item-info {
+	display: inline-block;
+	height: 50px;
+	margin: 4px;
+	display: flex;
+	align-items: center;
+}
+
+.inventory-descript {
+	margin: 6px;
+	font-weight: lighter;
+	text-indent: 50px;
 }
 
 .close-inventory {

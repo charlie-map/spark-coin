@@ -86,13 +86,46 @@ input:invalid {
 	align-items: center;
 }
 
-#balance_display {
+.shake_balance {
+	display: none;
 	font-size: 65px;
+	color: transparent;
+	position: absolute;
 	transition: 1s ease;
 }
 
-#balance_display.changing {
+.shake_balance.changing-down {
+	display: block;
+	text-shadow: 0 0 8px #bd4881;
 	transition: 1s ease;
+}
+
+.shake_balance.changing-up {
+	display: block;
+	text-shadow: 0 0 8px #00a6a6;
+	transition: 1s ease;
+}
+
+.lightning-bolt {
+	font-family: 'Arial';
+	font-size: 75px;
+	margin-right: 10px;
+	transition: left 1s ease;
+}
+
+#balance_display {
+	font-size: 65px;
+	transition: 0.2s ease;
+}
+
+#balance_display.changing-down {
+	transition: 0.2s ease;
 	color: transparent;
-	text-shadow: 0 0 8px #000;
+	text-shadow: 0 0 8px #bd4881;
+}
+
+#balance_display.changing-up {
+	transition: 0.2s ease;
+	color: transparent;
+	text-shadow: 0 0 8px #00a6a6;
 }

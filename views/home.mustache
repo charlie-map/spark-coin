@@ -21,9 +21,13 @@
 			</div>
 
 			<div class="balance">
-				<span style="font-family: 'Arial'; font-size: 75px; margin-right: 10px">⚡</span>
-				<h1 id="balance_display">{{BALANCE}}</h1>
+				<h1 class="shake_balance animate__animated">23.45</h1>
+				<h1 class="shake_balance animate__animated">1205.367</h1>
+				<span class="lightning-bolt">⚡</span>
+				<h1 id="balance_display" class="animate__animated">{{BALANCE}}</h1>
 			</div>
+
+			<button id="test">Click</button>
 		</div>
 
 		<script src="/socket.io/socket.io.js"></script>

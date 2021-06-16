@@ -137,9 +137,11 @@ $(".close-inventory").click(() => {
 	$(".inventory-popup").removeClass('open');
 });
 
-$(".purchase-item").click(function() {
-	console.log("run");
-	console.log(this.id);
+$(".price").click(function() {
+	console.log("clicked?");
+});
+
+$(".inner-inventory").on("click", ".purchase-item", function() {
 	socket.emit('purchase', this.id, function(result) {
 		console.log(result);
 	});

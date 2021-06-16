@@ -47,12 +47,12 @@ app.use(bodyParser.urlencoded({
 	extended: false
 }));
 let sess_store = new memorystore({
-		checkPeriod: 86400000/2
+	checkPeriod: 86400000 / 2
 });
 let sess_secret = uuidv4()
 let sess = session({
 	cookie: {
-		maxAge: 86400000/2,
+		maxAge: 86400000 / 2,
 		httpOnly: false
 	},
 	store: sess_store,
@@ -86,11 +86,11 @@ function roundTo(n, digits) {
 /* MIDDLEWARE */
 
 class LoginError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "LoginError";
-    this.login = 1;
-  }
+	constructor(message) {
+		super(message);
+		this.name = "LoginError";
+		this.login = 1;
+	}
 }
 
 function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
@@ -112,9 +112,14 @@ app.get("/", isLoggedIn(), (req, res, next) => {
 	connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
 		if (err || !result) return next(new Error('Database error.'));
 		req.user.balance = result[0].balance;
-		res.render("home", {
-			BALANCE: req.user.staffer > 1 ? '∞' : req.user.balance
-		});
+		if (req.user.staffer > 1)
+			res.render("admin_home", {
+				BALANCE: '∞'
+			})
+		else
+			res.render("home", {
+				BALANCE: req.user.balance
+			});
 	});
 });
 
@@ -250,13 +255,13 @@ app.get("/admin/campers", isLoggedIn(2), (req, res, next) => {
 
 app.post("/admin/raffle", isLoggedIn(2), (req, res) => {
 	RAFFLE_MODE = !RAFFLE_MODE;
-	res.end(""+RAFFLE_MODE);
+	res.end("" + RAFFLE_MODE);
 });
 
 app.get("/admin/raffle/drawing", isLoggedIn(2), async (req, res, next) => {
 	try {
 		// get all raffle items
-		let raffle_items = await new Promise ((resolve, reject) => {
+		let raffle_items = await new Promise((resolve, reject) => {
 			connection.query("SELECT id, item_name, description FROM raffle_item WHERE active = 1;", (err, result) => {
 				if (err) reject(err);
 				resolve(result);
@@ -268,7 +273,10 @@ app.get("/admin/raffle/drawing", isLoggedIn(2), async (req, res, next) => {
 			return new Promise((resolve, reject) => {
 				connection.query("SELECT sender_id FROM tx WHERE raffle_item = ?;", [item.id], (err, result) => {
 					if (err) reject(err);
-					if (!result || !result.length) { item.winner = -1; return resolve(item); }
+					if (!result || !result.length) {
+						item.winner = -1;
+						return resolve(item);
+					}
 					item.winner = result[Math.floor(Math.random() * result.length)].sender_id;
 					return resolve(item);
 				});
@@ -326,12 +334,16 @@ app.get("/logout", (req, res) => {
 
 /* ERROR HANDLING CHAIN */
 
-app.use(function(err, req, res, next) {	// handle all other thrown errors
-	if (err.login)	// handle login errors
-		res.render("initial", err.message ? { MESSAGE: err.message } : {} );
-	else {			// handle all other errors
+app.use(function(err, req, res, next) { // handle all other thrown errors
+	if (err.login) // handle login errors
+		res.render("initial", err.message ? {
+			MESSAGE: err.message
+		} : {});
+	else { // handle all other errors
 		console.error(err);
-		res.render("error", { ERROR_MESSAGE: err.message });
+		res.render("error", {
+			ERROR_MESSAGE: err.message
+		});
 	}
 });
 
@@ -344,7 +356,10 @@ io.on('connection', (socket) => {
 	if (!sid)
 		socket.disconnect();
 	else
-		sess_store.get(sid, (err, data) => { socket.user = data.user; user_sockets[data.user.camper_id] = socket; });
+		sess_store.get(sid, (err, data) => {
+			socket.user = data.user;
+			user_sockets[data.user.camper_id] = socket;
+		});
 
 	socket.on('inventory_get', (cb) => {
 		// if raffle, send raffle items instead
@@ -398,8 +413,7 @@ io.on('connection', (socket) => {
 				await new Promise((resolve, reject) => {
 					connection.query("UPDATE spark_user SET balance = ? WHERE camper_id = ?;", [bal, socket.user.camper_id], (err) => {
 						if (err) reject(err);
-						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (NULL, ?, NULL, ?, 1, NULL, ?);",
-							[ socket.user.camper_id, item.id, new Date()], (err) => {
+						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (NULL, ?, NULL, ?, 1, NULL, ?);", [socket.user.camper_id, item.id, new Date()], (err) => {
 							if (err) reject(err);
 							resolve();
 						});
@@ -411,12 +425,11 @@ io.on('connection', (socket) => {
 
 			// remove quantity / remove balance / log tx
 			await new Promise((resolve, reject) => {
-				connection.query("UPDATE inventory SET quantity = ? WHERE id = ?;", [item.quantity-1, item.id], (err) => {
+				connection.query("UPDATE inventory SET quantity = ? WHERE id = ?;", [item.quantity - 1, item.id], (err) => {
 					if (err) reject(err);
 					connection.query("UPDATE spark_user SET balance = ? WHERE camper_id = ?;", [bal, socket.user.camper_id], (err) => {
 						if (err) reject(err);
-						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (NULL, ?, ?, NULL, ?, NULL, ?);",
-							[ socket.user.camper_id, item.id, item.price, new Date()], (err) => {
+						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (NULL, ?, ?, NULL, ?, NULL, ?);", [socket.user.camper_id, item.id, item.price, new Date()], (err) => {
 							if (err) reject(err);
 							resolve();
 						});
@@ -426,8 +439,8 @@ io.on('connection', (socket) => {
 
 			// notify all parties
 			socket.emit('balance', bal, -1);
-			let message = 'Item ' + item.item_name + ' was purchased by ' + socket.user.first_name + ' ' + socket.user.last_name + ' (#' + socket.user.camper_id + ')!' + ' There are ' + (item.quantity-1) + ' of these left.';
-			if (!item.camper_id) {	// camp-wide alert for camp-wide item
+			let message = 'Item ' + item.item_name + ' was purchased by ' + socket.user.first_name + ' ' + socket.user.last_name + ' (#' + socket.user.camper_id + ')!' + ' There are ' + (item.quantity - 1) + ' of these left.';
+			if (!item.camper_id) { // camp-wide alert for camp-wide item
 				// loop through users and find all admins
 				let admin_slack_ids = await new Promise((resolve, reject) => {
 					connection.query("SELECT slack_id FROM spark_user WHERE staffer > 1;", (err, result) => {
@@ -437,15 +450,18 @@ io.on('connection', (socket) => {
 					});
 				});
 				await Promise.all(admin_slack_ids.map((slack_id) => {
-					axios.post('https://slack.com/api/chat.postMessage',
-					{
+					axios.post('https://slack.com/api/chat.postMessage', {
 						token: process.env.SLACK_TOKEN,
 						channel: slack_id.slack_id,
 						text: message
-					}, { headers: { authorization: 'Bearer ' + process.env.SLACK_TOKEN } });
+					}, {
+						headers: {
+							authorization: 'Bearer ' + process.env.SLACK_TOKEN
+						}
+					});
 				}));
 				return cb(false);
-			} else {				// specific alert for staffer
+			} else { // specific alert for staffer
 				if (user_sockets[item.camper_id]) user_sockets[item.camper_id].emit('alert', message);
 				// look up staffer's slack ID & message them
 				let slack_id = await new Promise((resolve, reject) => {
@@ -456,12 +472,15 @@ io.on('connection', (socket) => {
 					});
 				});
 				if (slack_id) {
-					await axios.post('https://slack.com/api/chat.postMessage',
-					{
+					await axios.post('https://slack.com/api/chat.postMessage', {
 						token: process.env.SLACK_TOKEN,
 						channel: slack_id,
 						text: message
-					}, { headers: { authorization: 'Bearer ' + process.env.SLACK_TOKEN } });
+					}, {
+						headers: {
+							authorization: 'Bearer ' + process.env.SLACK_TOKEN
+						}
+					});
 				}
 				return cb(false);
 			}
@@ -501,8 +520,7 @@ io.on('connection', (socket) => {
 					if (err) reject(err);
 					connection.query("UPDATE spark_user SET balance = ? WHERE camper_id = ?;", [receiving_bal, receiving_id], (err) => {
 						if (err) reject(err);
-						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (?, ?, NULL, NULL, ?, ?, ?);",
-							[ receiving_id, socket.user.camper_id, amount, message, new Date()], (err) => {
+						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (?, ?, NULL, NULL, ?, ?, ?);", [receiving_id, socket.user.camper_id, amount, message, new Date()], (err) => {
 							if (err) reject(err);
 							resolve();
 						});

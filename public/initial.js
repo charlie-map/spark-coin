@@ -77,21 +77,21 @@ $(".icon-div").click(function() {
 			all_inventory.forEach(invent => {
 
 				let inventory_item = "<div id='" + invent.id + "'>" +
-				 	"<div class='display-styling-inventory'>" +
-				 		"<div style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'" +
-				 		"class='spark-logo-inventory'></div>" +
-						"<div class='item-info'>" +
-							"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
-							"<ion-icon name='chevron-forward-outline'></ion-icon>" +
-							"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "The Director") + "</div>" +
-						"</div>" +
-						"<button class='purchase-item'>" +
-							"<span class='lightning-bolt-button'>⚡</span>" +
-							"<span class='price'>" + invent.price + "</span>" +
-						"</button>" +
+					"<div class='display-styling-inventory'>" +
+					"<div style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'" +
+					"class='spark-logo-inventory'></div>" +
+					"<div class='item-info'>" +
+					"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
+					"<ion-icon name='chevron-forward-outline'></ion-icon>" +
+					"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "The Director") + "</div>" +
+					"</div>" +
+					"<button id='" + invent.id + "' class='purchase-item'>" +
+					"<span class='lightning-bolt-button'>⚡</span>" +
+					"<span class='price'>" + invent.price + "</span>" +
+					"</button>" +
 					"</div>" +
 					"<div class='inventory-descript'>" + invent.description + "</div>" +
-				"</div>";
+					"</div>";
 
 				$(".inner-inventory").append(inventory_item);
 			});
@@ -99,7 +99,6 @@ $(".icon-div").click(function() {
 
 		$(".inventory-popup").addClass('open');
 	} else if ($(this).hasClass('send-item')) {
-		console.log("open");
 		if ($(".send-item-popup").hasClass('open')) {
 			$(".send-item-popup").removeClass('open');
 			return;
@@ -136,6 +135,14 @@ function popout_alert(message) {
 
 $(".close-inventory").click(() => {
 	$(".inventory-popup").removeClass('open');
+});
+
+$(".purchase-item").click(function() {
+	console.log("run");
+	console.log(this.id);
+	socket.emit('purchase', this.id, function(result) {
+		console.log(result);
+	});
 });
 
 $(".close-send-item").click(() => {

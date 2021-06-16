@@ -97,7 +97,7 @@ function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 	return (req, res, next) => {
 		if (!req.session || !req.session.user)
 			next(new LoginError());
-		else if (role && req.session.user.staffer != role)
+		else if (role && req.session.user.staffer < role)
 			next(new Error("You aren't allowed to do that!"));
 		else {
 			req.user = req.session.user;
@@ -112,11 +112,6 @@ app.get("/", isLoggedIn(), (req, res, next) => {
 	connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
 		if (err || !result) return next(new Error('Database error.'));
 		req.user.balance = result[0].balance;
-		if (req.user.staffer > 1)
-			res.render("admin_home", {
-				BALANCE: '∞'
-			})
-		else
 			res.render("home", {
 				BALANCE: req.user.balance
 			});
@@ -166,8 +161,10 @@ app.delete("/inventory", isLoggedIn(1), (req, res) => {
 /* ADMIN ENDPOINTS */
 
 app.get("/admin", isLoggedIn(2), (req, res) => {
-	// TODO: render admin frontend
-	res.end("Admin level access!");
+	// render admin page
+	res.render("admin_home", {
+		BALANCE: '∞'
+	});
 });
 
 app.get("/admin/inventory", isLoggedIn(2), (req, res, next) => {
@@ -323,7 +320,9 @@ app.post("/login", (req, res, next) => {
 		if (err) return next(err);
 		if (!camper || !camper[0]) return next(new LoginError("Incorrect ID or PIN."));
 		req.session.user = camper[0];
-		res.redirect("/");
+
+		if (req.session.user.staffer >= 2) res.redirect("/admin");
+		else res.redirect("/");
 	});
 });
 

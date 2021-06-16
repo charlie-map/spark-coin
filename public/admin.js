@@ -71,32 +71,34 @@ $(".icon-div").click(function() {
 			return;
 		}
 
-		socket.emit('inventory_get', (all_inventory) => {
+		$.ajax("/admin/inventory", {
 
-			$(".inner-inventory").empty();
+			success: function(all_inventory) {
+				$(".inner-inventory.admin").empty();
 
-			all_inventory.forEach(invent => {
+				all_inventory.forEach(invent => {
 
-				let inventory_item = "<div id='" + invent.id + "'>" +
-					"<div class='display-styling-inventory'>" +
-					"<div style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'" +
-					"class='spark-logo-inventory'></div>" +
-					"<div class='item-info'>" +
-					"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
-					"<ion-icon name='chevron-forward-outline'></ion-icon>" +
-					"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "❓❓❓") + "</div>" +
-					"</div>" +
-					"<button id='" + invent.id + "' class='purchase-item'>" +
-					"<span class='lightning-bolt-button'>⚡</span>" +
-					"<span class='price'>" + invent.price + "</span>" +
-					"</button>" +
-					"</div>" +
-					"<div class='inventory-descript'>" + invent.description + "</div>" +
-					"</div>";
+					let inventory_item = "<div id='" + invent.id + "'>" +
+						"<div class='display-styling-inventory'>" +
+						"<div style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'" +
+						"class='spark-logo-inventory'></div>" +
+						"<div class='item-info'>" +
+						"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
+						"<ion-icon name='chevron-forward-outline'></ion-icon>" +
+						"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "❓❓❓") + "</div>" +
+						"</div>" +
+						"<button id='" + invent.id + "' class='purchase-item'>" +
+						"<span class='lightning-bolt-button'>⚡</span>" +
+						"<span class='price'>" + invent.price + "</span>" +
+						"</button>" +
+						"</div>" +
+						"<div class='inventory-descript'>" + invent.description + "</div>" +
+						"</div>";
 
-				$(".inner-inventory").append(inventory_item);
-			});
-		})
+					$(".inner-inventory.admin").append(inventory_item);
+				});
+			}
+		});
 
 		$(".inventory-popup").addClass('open');
 	} else if ($(this).hasClass('send-item')) {

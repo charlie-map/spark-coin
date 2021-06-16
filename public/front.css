@@ -233,10 +233,6 @@ input:invalid {
 	background-position: center top;
 }
 
-.inner-inventory {
-	margin-top: 10px;
-}
-
 .inner-inventory > div {
 	position: relative;
 	background: #f7e88f;
@@ -341,4 +337,42 @@ input:invalid {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+/* ADMIN INVENTORY */
+
+.choose-inventory {
+	height: calc(100vh - 70px);
+}
+
+.button-align {
+	width: 100%;
+	height: 5%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+}
+
+.button-align > button {
+	width: 50%;
+	margin: 0;
+	border-radius: 0px;
+	font-weight: bold;
+	border: none;
+	background: #496a81;
+}
+
+.button-align > button.button-selected {
+	background: #00a6a6;
+}
+
+.inner-inventory {
+	
+}
+
+.selected {
+	border-top: 10px #00a6a6 solid;
+	width: 100%;
+	height: calc(100% - 5.5%);
+	background: #00a6a6;
 }

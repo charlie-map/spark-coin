@@ -85,6 +85,8 @@ $(".icon-div").click(function() {
 		// });
 
 		$(".inventory-popup").addClass('open');
+	} else if ($(this).hasClass('send-item')) {
+		// play here
 	}
 });
 

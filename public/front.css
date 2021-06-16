@@ -252,3 +252,57 @@ input:invalid {
 	align-items: center;
 	justify-content: center;
 }
+
+.send-item-popup {
+	position: absolute;
+	background: white;
+	top: -101%;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	border-bottom: 3px solid grey;
+	transition: 1s ease;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+@media only screen and (max-width: 500px) {
+	.send-item-popup {
+		position: absolute;
+		background: white;
+		top: -101%;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		border-bottom: 3px solid grey;
+		transition: 1s ease;
+		flex-direction: column;
+		justify-content: center;
+	}
+}
+
+.send-item-popup.open {
+	top: 0px;
+	transition: 1s ease;
+}
+
+.send-item-popup h1 {
+	margin: 0;
+	left: 0px;
+	height: 70px;
+	width: 80%;
+	text-align: center;
+	line-height: 200%;
+}
+
+.close-send-item {
+	position: absolute;
+	width: 70px;
+	height: 70px;
+	top: 0px;
+	right: 0px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}

@@ -86,19 +86,28 @@ $(".icon-div").click(function() {
 
 		$(".inventory-popup").addClass('open');
 	} else if ($(this).hasClass('send-item')) {
-		// play here
-		let receiving_id = prompt("Receiving ID?");
-		let amount = prompt("Amount?");
-		let message = prompt("Message?");
-		socket.emit('transfer', receiving_id, amount, message, (err) => {
-			if (err)
-				alert(JSON.stringify(err));
-			else
-				alert("Success!");
-		});
+		console.log("open");
+		if ($(".send-item-popup").hasClass('open')) {
+			$(".send-item-popup").removeClass('open');
+			return;
+		}
+		$(".send-item-popup").addClass('open');
+		// let receiving_id = prompt("Receiving ID?");
+		// let amount = prompt("Amount?");
+		// let message = prompt("Message?");
+		// socket.emit('transfer', receiving_id, amount, message, (err) => {
+		// 	if (err)
+		// 		alert(JSON.stringify(err));
+		// 	else
+		// 		alert("Success!");
+		// });
 	}
 });
 
 $(".close-inventory").click(() => {
 	$(".inventory-popup").removeClass('open');
+});
+
+$(".close-send-item").click(() => {
+	$(".send-item-popup").removeClass('open');
 });

@@ -33,7 +33,6 @@ connection.connect((err) => {
 	if (err) throw err;
 });
 
-app.set('view', __dirname + "/views");
 app.use(express.static(__dirname + "/public"));
 
 app.set('views', __dirname + "/views");
@@ -44,7 +43,9 @@ app.use(bodyParser.urlencoded({
 	extended: false
 }));
 app.use(session({
-	cookie: { maxAge: 86400000 },
+	cookie: {
+		maxAge: 86400000
+	},
 	store: new memorystore({
 		checkPeriod: 86400000
 	}),
@@ -77,8 +78,14 @@ function isLoggedIn(role) {
 
 /* TEST AUTHENTICATED ENDPOINTS */
 
-app.get("/camper", isLoggedIn(0), (req, res) => {
-	res.end("Camper level access!");
+app.get("/camper/:camper_id", isLoggedIn(0), (req, res) => {
+	connection.query("SELECT * FROM spark_user WHERE camper_id=?", req.params.camper_id, (err, camper_info) => {
+		if (err) throw new Error("No camper under this information");
+
+		res.render("home", {
+			BALANCE: camper_info[0].balance
+		});
+	});
 });
 
 app.get("/staffer", isLoggedIn(1), (req, res) => {
@@ -97,32 +104,35 @@ app.get("/", (req, res) => {
 
 app.post("/login", (req, res) => {
 	// validate required info (TODO: validate formatting)
+	// remove anything besides numbers?? -- frontend validation as well
 	if (!req.body.camper_id || !req.body.pin) {
-		res.end("no fields");	// TODO: error handling
+		res.end("no fields"); // TODO: error handling
 		return;
 	}
 	// check PIN against MySQL
 	connection.query('SELECT * FROM spark_user JOIN registration.camper ON spark_user.camper_id = registration.camper.id WHERE camper_id = ? AND pin = ?;', [req.body.camper_id, req.body.pin], (err, camper) => {
 		console.error(err);
 		if (err || !camper || !camper[0]) {
-			res.end("no db");	// TODO: error handling
+			res.end("no db"); // TODO: error handling
 			return;
 		}
 		req.session.user = camper[0];
-		res.sendFile(__dirname + "/views/home.html");
+		if (camper[0].staffer == 0) res.redirect("/camper/" + camper[0].camper_id);
 	});
 });
 
 app.get("/logout", (req, res) => {
-	req.session = null;	// unset: destroy takes care of it
+	req.session = null; // unset: destroy takes care of it
 	res.redirect("/");
 });
 
 /* LISTENERS */
 
-app.use(function (err, req, res, next) {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
+app.use(function(err, req, res, next) {
+	console.error(err.stack);
+	res.render("error", {
+		ERROR_MESSAGE: err.message
+	});
 });
 
 io.on('connection', socket => {

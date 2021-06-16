@@ -71,12 +71,17 @@
 				</div>
 
 				<form method="POST" action="/nowhere">
-					<input type="text" name="receiver_id" placeholder="Receiver's ID" pattern="[0-9]+">
-					<input type="text" name="number" placeholder="Amount">
-					<input type="text" name="message" placeholder="Message">
-					<input type="submit" value="Send" id="submission">
+					<input type="text" name="receiver_id" id="receiver_id_value" placeholder="Receiver's ID" pattern="[0-9]+">
+					<input type="text" name="number" id="number_send_item" placeholder="Amount">
+					<input type="text" name="message" id="message_send_item" placeholder="Message">
+					<input type="submit" value="Send" class="submit-button" id="submit-sparks">
 				</form>
 			</div>
+		</div>
+		
+		<div class="message-background"></div>
+		<div class="message-alert">
+			<h1>Test Alert</h1>
 		</div>
 
 		<script src="/socket.io/socket.io.js"></script>

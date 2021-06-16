@@ -92,17 +92,34 @@ $(".icon-div").click(function() {
 			return;
 		}
 		$(".send-item-popup").addClass('open');
-		// let receiving_id = prompt("Receiving ID?");
-		// let amount = prompt("Amount?");
-		// let message = prompt("Message?");
-		// socket.emit('transfer', receiving_id, amount, message, (err) => {
-		// 	if (err)
-		// 		alert(JSON.stringify(err));
-		// 	else
-		// 		alert("Success!");
-		// });
+
+		$("#submit-sparks").click(function(event) {
+			event.preventDefault();
+
+			let receiving_id = $("#receiver_id_value").val();
+			let amount = $("#number_send_item").val();
+			let message = $("#message_send_item").val();
+			socket.emit('transfer', receiving_id, amount, message, (err) => {
+				if (err)
+					popout_alert(JSON.stringify(err));
+				else
+					popout_alert("Success!");
+			});
+		});
 	}
 });
+
+function popout_alert(message) {
+	$(".message-alert").children("h1").text(message);
+
+	$(".message-background").addClass('open');
+	$(".message-alert").addClass('open');
+
+	setTimeout(function() {
+		$(".message-background").removeClass('open');
+		$(".message-alert").removeClass('open');
+	}, 3500);
+}
 
 $(".close-inventory").click(() => {
 	$(".inventory-popup").removeClass('open');

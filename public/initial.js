@@ -30,8 +30,7 @@ function invis_number() {
 }
 
 function show_number() { // and change actual number value
-	if (num > 0) $("#balance_display").text("420.69");
-	else $("#balance_display").text("69.42");
+	$("#balance_display").text(balance);
 	$("#balance_display").removeClass("animate__shakeY");
 	$(".shake_balance").removeClass("animate__shakeY");
 
@@ -52,9 +51,43 @@ function change_number() {
 }
 
 let num;
+let balance;
 
-$("#test").click(() => {
+socket.on('balance', (balance, up_down) => {
+	num = up_down;
+	balance = balance;
+
+	change_number()
+});
+
+$(window).on('resize', function() {
 	$(".shake_balance").css("left", $(".lightning-bolt").offset().left + 70 + "px");
-	num = 1;
-	change_number();
+});
+
+$(".icon-div").click(function() {
+	console.log($(this).hasClass('open-inventory'));
+	if ($(this).hasClass('open-inventory')) {
+		if ($(".inventory-popup").hasClass('open')) {
+			$(".inventory-popup").removeClass('open');
+			return;
+		}
+
+		// socket.emit('inventory_get', (all_inventory) => {
+
+		// 	all_inventory.forEach(invent => {
+
+		// 		$(".inventory").append(
+		// 			"<div id='" + invent.id + "'>" +
+		// 				"<img src='" + invent.image_url + "'" +
+		// 				""
+		// 		);
+		// 	});
+		// });
+
+		$(".inventory-popup").addClass('open');
+	}
+});
+
+$(".close-inventory").click(() => {
+	$(".inventory-popup").removeClass('open');
 });

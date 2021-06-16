@@ -8,6 +8,7 @@
 	    <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
 	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+	    <script style="display: none" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons.js"></script>
 
 		<link rel="stylesheet" href="/front.css"/>
 
@@ -27,7 +28,29 @@
 				<h1 id="balance_display" class="animate__animated">{{BALANCE}}</h1>
 			</div>
 
-			<button id="test">Click</button>
+			<div class="select-icons">
+				<div class="icon-div open-inventory">
+					<ion-icon class="icon-objects" name="file-tray-stacked-outline"></ion-icon>
+
+				</div>
+				<div class="icon-div send-item">
+					<ion-icon class="icon-objects" name="send-outline"></ion-icon>
+				</div>
+			</div>
+
+			<div class="inventory-popup">
+				<h1>Current Inventory</h1>
+				<div class="close-inventory">
+					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
+				</div>
+				<div class="inner-inventory">
+					<div id="initial-inventory">
+					<!-- id -->
+
+						<div class="spark-logo"></div>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<script src="/socket.io/socket.io.js"></script>

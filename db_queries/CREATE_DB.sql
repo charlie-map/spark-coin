@@ -10,13 +10,16 @@ CREATE TABLE spark_user (
 	balance DOUBLE NOT NULL,
 	last_login DATETIME,
 	slack_id VARCHAR(255),
+	camp_name VARCHAR(255)
 	FOREIGN KEY (`camper_id`) REFERENCES registration.camper (`id`) ON DELETE CASCADE
 );
 
 CREATE TABLE inventory (
 	id INT AUTO_INCREMENT NOT NULL,
-	camper_id INT NOT NULL,
+	camper_id INT,
 	item_name VARCHAR(255) NOT NULL,
+	description TEXT,
+	image_url TEXT,
 	price DOUBLE NOT NULL,
 	quantity INT,
 	active TINYINT,

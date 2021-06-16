@@ -53,9 +53,9 @@ function change_number() {
 let num;
 let balance;
 
-socket.on('balance', (balance, up_down) => {
+socket.on('balance', (_balance, up_down) => {
 	num = up_down;
-	balance = balance;
+	balance = _balance;
 
 	change_number()
 });
@@ -87,6 +87,15 @@ $(".icon-div").click(function() {
 		$(".inventory-popup").addClass('open');
 	} else if ($(this).hasClass('send-item')) {
 		// play here
+		let receiving_id = prompt("Receiving ID?");
+		let amount = prompt("Amount?");
+		let message = prompt("Message?");
+		socket.emit('transfer', receiving_id, amount, message, (err) => {
+			if (err)
+				alert(JSON.stringify(err));
+			else
+				alert("Success!");
+		});
 	}
 });
 

@@ -233,6 +233,10 @@ input:invalid {
 	background-position: center top;
 }
 
+.spark-logo-inventory.remove-hover:hover {
+	cursor: pointer;
+}
+
 .inner-inventory > div {
 	position: relative;
 	background: #f7e88f;
@@ -362,6 +366,28 @@ input:invalid {
 	background: #496a81;
 }
 
+.button-align > button:hover {
+	cursor: pointer;
+}
+
+.selection-menu-bar-admin > button {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.selection-menu-bar-admin > button {
+	background: transparent;
+}
+
+.button-align.selection-menu-bar-admin > button:hover {
+	cursor: pointer;
+}
+
+.button-align.selection-menu-bar-admin > button > ion-icon {
+	transform: scale(175%);
+}
+
 .button-align > button.button-selected {
 	background: #00a6a6;
 }
@@ -370,10 +396,98 @@ input:invalid {
 	display: none;
 }
 
+.inner-inventory.non-admin {
+	display: block;
+}
+
+.inner-inventory > div.non-active {
+	background: #bd4881;
+	border-bottom: 1px #bd4881 solid;
+}
+
 .selected {
 	display: block;
 	border-top: 10px #00a6a6 solid;
 	width: 100%;
-	height: calc(100% - 5.5%);
+	height: calc(100% - 11%);
 	background: #00a6a6;
+}
+
+/* LOADING ANIMATION */
+
+.spin-container {
+	display: none;
+}
+
+.spin-container.open {
+	display: block;
+	position: absolute;
+	text-align: center;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(0.5);
+	z-index: 30;
+}
+
+.spin {
+	border: 3px solid #496a81;
+	width: 200px;
+	height: 200px;
+	margin: 0 auto;
+	border-radius: 50%;
+	border-left-color: transparent;
+	border-right-color: transparent;
+	animation: rotate 2s cubic-bezier(0.26, 1.36, 0.74, -0.29) infinite;
+}
+
+#loader2 {
+	border: 3px solid #00a6a6;
+	width: 220px;
+	height: 220px;
+	position: relative;
+	top: -216px;
+	border-left-color: transparent;
+	border-right-color: transparent;
+	animation: rotate2 2s cubic-bezier(0.26, 1.36, 0.74, -0.29) infinite;
+}
+
+#loader3 {
+	border: 3px solid #eca465;
+	width: 240px;
+	height: 240px;
+	position: relative;
+	top: -452px;
+	border-left-color: transparent;
+	border-right-color: transparent;
+	animation: rotate 2s cubic-bezier(0.26, 1.36, 0.74, -0.29) infinite;
+}
+
+#loader4 {
+	border: 3px solid #bd4881;
+	width: 260px;
+	height: 260px;
+	position: relative;
+	top: -708px;
+	border-left-color: transparent;
+	border-right-color: transparent;
+	animation: rotate2 2s cubic-bezier(0.26, 1.36, 0.74, -0.29) infinite;
+}
+
+@keyframes rotate {
+	0% {
+		transform: rotateZ(-360deg)
+	}
+
+	100% {
+		transform: rotateZ(0deg)
+	}
+}
+@keyframes rotate2 {
+	0% {
+		transform: rotateZ(360deg)
+	}
+
+	100% {
+		transform: rotateZ(0deg)
+	}
 }

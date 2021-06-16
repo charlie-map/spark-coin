@@ -72,7 +72,6 @@ $(".icon-div").click(function() {
 		}
 
 		socket.emit('inventory_get', (all_inventory) => {
-
 			$(".inner-inventory").empty();
 
 			all_inventory.forEach(invent => {
@@ -94,6 +93,7 @@ $(".icon-div").click(function() {
 					"<div class='inventory-descript'>" + invent.description + "</div>" +
 					"</div>";
 
+				console.log(inventory_item);
 				$(".inner-inventory").append(inventory_item);
 			});
 		})

@@ -193,7 +193,7 @@ app.delete("/admin/inventory", isLoggedIn(2), (req, res, next) => {
 	if (!req.body.id) return next(new Error('Required field missing.'));
 	connection.query("UPDATE inventory SET active = 0 WHERE id = ?;", [req.body.id], (err) => {
 		if (err) return next(err);
-		res.end();
+		res.end(req.body.id);
 	});
 });
 

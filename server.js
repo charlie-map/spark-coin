@@ -10,6 +10,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const server = require('http').createServer(app);
+const signature = require('cookie-signature');
 
 const io = require('socket.io')(server);
 
@@ -42,21 +43,42 @@ app.engine('mustache', mustache());
 app.use(bodyParser.urlencoded({
 	extended: false
 }));
-app.use(session({
+let sess_store = new memorystore({
+		checkPeriod: 86400000/2
+});
+let sess_secret = uuidv4()
+let sess = session({
 	cookie: {
-		maxAge: 86400000
+		maxAge: 86400000/2,
+		httpOnly: false
 	},
-	store: new memorystore({
-		checkPeriod: 86400000
-	}),
+	store: sess_store,
 	resave: false,
 	secure: false,
 	unset: 'destroy',
 	saveUninitialized: false,
 	name: 'sparks.sid',
 	sameSite: true,
-	secret: uuidv4()
-}));
+	secret: sess_secret
+});
+app.use(sess);
+
+let user_sockets = {};
+
+let RAFFLE_MODE = 0;
+const DEFAULT_START = 10;
+
+/* BOTTOMWARE */
+
+function roundTo(n, digits) {
+	if (digits === undefined) {
+		digits = 0;
+	}
+
+	var multiplicator = Math.pow(10, digits);
+	n = parseFloat((n * multiplicator).toFixed(11));
+	return Math.round(n) / multiplicator;
+}
 
 /* MIDDLEWARE */
 
@@ -72,11 +94,10 @@ function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 	return (req, res, next) => {
 		if (!req.session || !req.session.user)
 			next(new LoginError());
-		else if (role && req.session.user.staffer < role)
+		else if (role && req.session.user.staffer != role)
 			next(new Error("You aren't allowed to do that!"));
 		else {
 			req.user = req.session.user;
-			console.log(req.user);
 			next();
 		}
 	};
@@ -84,15 +105,156 @@ function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 
 /* SYSTEM ENDPOINTS */
 
-app.get("/", isLoggedIn(0), (req, res) => {
-	res.render("home", {
-		BALANCE: req.user.staffer > 1 ? '∞' : req.user.balance
+app.get("/", isLoggedIn(), (req, res, next) => {
+	connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
+		if (err || !result) return next(new Error('Database error.'));
+		req.user.balance = result[0].balance;
+		res.render("home", {
+			BALANCE: req.user.staffer > 1 ? '∞' : req.user.balance
+		});
 	});
 });
+
+app.get("/raffle", isLoggedIn(), (req, res) => {
+	res.end(RAFFLE_MODE);
+});
+
+app.post("/transfer", isLoggedIn(), (req, res) => {
+	// TODO: Trigger UI Change (both)
+});
+
+/* CAMPER ENDPOINTS */
+
+app.post("/purchase", isLoggedIn(0), (req, res) => {
+	// TODO: Trigger Slack
+	// TODO: Trigger UI Change (camper)
+});
+
+/* STAFFER ENDPOINTS */
+
+app.get("/inventory", isLoggedIn(1), (req, res) => {
+	connection.query("SELECT * FROM inventory LEFT JOIN tx ON inventory.id = tx.inventory_item WHERE camper_id = ?", [req.user.id], (err, result) => {
+		if (err) return next(err);
+		res.json(result);
+	});
+});
+
+app.put("/inventory", isLoggedIn(1), (req, res) => {
+	if (!req.body.item_name || !req.body.price || !req.body.quantity) return next(new Error('Required field missing.'));
+	connection.query("INSERT INTO inventory (camper_id, item_name, price, quantity, active) VALUES (?, ?, ?, ?, 1);", [req.user.id, req.body.item_name, req.body.price, req.body.quantity], (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
+app.delete("/inventory", isLoggedIn(1), (req, res) => {
+	if (!req.body.id) return next(new Error('Required field missing.'));
+	connection.query("UPDATE inventory SET active = 0 WHERE id = ? AND camper_id = ?;", [req.body.id, req.user.id], (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
+/* ADMIN ENDPOINTS */
 
 app.get("/admin", isLoggedIn(2), (req, res) => {
 	// TODO: render admin frontend
 	res.end("Admin level access!");
+});
+
+app.get("/admin/inventory", isLoggedIn(2), (req, res, next) => {
+	connection.query("SELECT * FROM inventory WHERE camper_id IS NULL;", (err, result) => {
+		if (err) return next(err);
+		res.json(result);
+	});
+});
+
+app.get("/admin/inventory/all", isLoggedIn(2), (req, res, next) => {
+	connection.query("SELECT * FROM inventory;", (err, result) => {
+		if (err) return next(err);
+		res.json(result);
+	});
+});
+
+app.put("/admin/inventory", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.item_name || !req.body.price || !req.body.quantity) return next(new Error('Required field missing.'));
+	connection.query("INSERT INTO inventory (camper_id, item_name, price, quantity, active) VALUES (NULL, ?, ?, ?, 1);", [req.body.item_name, req.body.price, req.body.quantity], (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
+app.delete("/admin/inventory", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.id) return next(new Error('Required field missing.'));
+	connection.query("UPDATE inventory SET active = 0 WHERE id = ?;", [req.body.id], (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
+app.put("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.item_name || !req.body.description) return next(new Error('Required field missing.'));
+	connection.query("INSERT INTO raffle_item (item_name, description, image_url) VALUES (?, ?, ?);", [req.body.item_name, req.body.description, req.body.image_url], (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
+app.delete("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.id) return next(new Error('Required field missing.'));
+	connection.query("DELETE FROM raffle_item WHERE id = ?;", [req.body.id], (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
+app.post("/admin/load", isLoggedIn(2), async (req, res, next) => {
+	if (!req.body.week_id) return next(new Error('Required field missing.'));
+	connection.query("SELECT * FROM registration.week WHERE id = ?;", [req.body.week_id], async (err, result) => {
+		if (err || !result) return next(new Error('Invalid week.'));
+		connection.query("SELECT * FROM registration.enrollment JOIN registration.camper ON registration.enrollment.camper_id = registration.camper.id WHERE week_id = ? AND person_loc = 1;", [req.body.week_id], async (err, campers) => {
+			let date = new Date();
+			let camper_promise = campers.map((camper) => {
+				return new Promise((resolve, reject) => {
+					let new_pin = Math.floor(1000 + Math.random() * 9000);
+					connection.query("INSERT INTO spark_user (camper_id, staffer, pin, balance, last_login, slack_id) VALUES (?, 0, ?, ?, ?, NULL);", [camper.camper_id, new_pin, DEFAULT_START, date], (err) => {
+						if (err) reject(err);
+						camper.pin = new_pin;
+						resolve(camper);
+					});
+				});
+			});
+			await Promise.all(camper_promise);
+			res.json(campers);
+		});
+	});
+});
+
+app.post("/admin/reset", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.camper_id) return next(new Error('Required field missing.'));
+	let new_pin = Math.floor(1000 + Math.random() * 9000);
+	connection.query("UPDATE spark_user SET pin = ? WHERE camper_id = ?;", [new_pin, req.body.camper_id], (err) => {
+		res.end(new_pin);
+	});
+});
+
+app.get("/admin/campers", isLoggedIn(2), (req, res, next) => {
+	connection.query("SELECT * FROM spark_user;", (err, result) => {
+		if (err) return next(err);
+		res.json(result);
+	});
+});
+
+app.post("/admin/raffle", isLoggedIn(2), (req, res) => {
+	RAFFLE_MODE = !RAFFLE_MODE;
+	res.end(RAFFLE_MODE);
+});
+
+app.get("/admin/log", isLoggedIn(2), (req, res, next) => {
+	connection.query("SELECT * FROM tx ORDER BY time DESC", (err, result) => {
+		if (err) return next(err);
+		res.json(result);
+	});
 });
 
 /* AUTHENTICATION ENDPOINTS */
@@ -118,18 +280,80 @@ app.get("/logout", (req, res) => {
 /* ERROR HANDLING CHAIN */
 
 app.use(function(err, req, res, next) {	// handle all other thrown errors
-	console.error(err);
 	if (err.login)	// handle login errors
 		res.render("initial", err.message ? { MESSAGE: err.message } : {} );
 	else {			// handle all other errors
+		console.error(err);
 		res.render("error", { ERROR_MESSAGE: err.message });
 	}
 });
 
 /* LISTENERS */
 
-io.on('connection', socket => {
-	console.log("connected");
+io.on('connection', (socket) => {
+	// parse cookie to associate user with this session
+	let sid = decodeURIComponent(socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid=')).split('=')[1]);
+	sid = signature.unsign(sid.substring(2), sess_secret);
+	if (!sid)
+		socket.disconnect();
+	else
+		sess_store.get(sid, (err, data) => { socket.user = data.user; user_sockets[data.user.camper_id] = socket; });
+
+	socket.on('inventory_get', (cb) => {
+		// filter out no quantity items & only active items
+		connection.query("SELECT id, item_name, description, image_url, camp_name AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id WHERE active = 1 AND quantity > 0;", (err, result) => {
+			cb(result);
+		});
+	});
+
+	socket.on('transfer', async (receiving_id, amount, message, cb) => {
+		if (!socket.user) return cb("Not logged in.");
+		amount = parseFloat(amount);
+		if (amount == "NaN") return cb("Not a valid amount.");
+		amount = roundTo(amount, 3);
+		if (!(amount > 0)) return cb("Not a valid amount.");
+		try {
+			// get/verify amounts
+			let sending_bal = socket.user.staffer == 2 ? Infinity : await new Promise((resolve, reject) => {
+				connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [socket.user.camper_id], (err, result) => {
+					if (err || !result) reject("Receiving camper does not exist.");
+					if (result[0].balance < amount) reject("Not enough Sparks.");
+					resolve(result[0].balance);
+				});
+			});
+			let receiving_bal = await new Promise((resolve, reject) => {
+				connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [receiving_id], (err, result) => {
+					if (err || !result) reject(err);
+					resolve(result[0].balance);
+				});
+			});
+
+			sending_bal -= amount;
+			receiving_bal += amount;
+
+			// complete transfer (change balances, log tx)
+			await new Promise((resolve, reject) => {
+				connection.query("UPDATE spark_user SET balance = ? WHERE camper_id = ?;", [sending_bal == Infinity ? 69 : sending_bal, socket.user.camper_id], (err) => {
+					if (err) reject(err);
+					connection.query("UPDATE spark_user SET balance = ? WHERE camper_id = ?;", [receiving_bal, receiving_id], (err) => {
+						if (err) reject(err);
+						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (?, ?, NULL, NULL, ?, ?, ?);",
+							[ receiving_id, socket.user.camper_id, amount, message, new Date()], (err) => {
+							if (err) reject(err);
+							resolve();
+						});
+					});
+				});
+			});
+
+			// notify receiving and sending sockets of balance change
+			socket.emit('balance', sending_bal == Infinity ? '∞' : sending_bal, -1);
+			if (user_sockets[receiving_id]) user_sockets[receiving_id].emit('balance', receiving_bal, 1);
+			return cb(null);
+		} catch (err) {
+			return cb(err);
+		}
+	});
 });
 
 server.listen(9988, () => {

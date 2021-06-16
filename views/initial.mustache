@@ -14,9 +14,11 @@
 	</head>
 	<body>
 		<div class="container">
-			<div class="error-message">
-				{{MESSAGE}}
-			</div>
+			{{#MESSAGE}}
+				<div class="error-message">
+					{{MESSAGE}}
+				</div>
+			{{/MESSAGE}}
 			
 			<div class="spark-logo">
 				<a href="https://summerspark.stab.org"></a>

@@ -58,66 +58,55 @@ app.use(session({
 	secret: uuidv4()
 }));
 
-// role levels: 0 = camper; 1 = staffer; 2 = admin
-function isLoggedIn(role) {
+/* MIDDLEWARE */
+
+class LoginError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "LoginError";
+    this.login = 1;
+  }
+}
+
+function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 	return (req, res, next) => {
-		try {
-			if (!req.session || !req.session.user)
-				throw new Error("Not logged in.");
-			else if (role && req.session.user.staffer < role)
-				throw new Error("Insufficient permissions.");
-			else {
-				req.user = req.session.user;
-				next();
-			}
-		} catch (err) {
-			next(new Error(err));
+		if (!req.session || !req.session.user)
+			next(new LoginError());
+		else if (role && req.session.user.staffer < role)
+			next(new Error("You aren't allowed to do that!"));
+		else {
+			req.user = req.session.user;
+			console.log(req.user);
+			next();
 		}
 	};
 }
 
-/* TEST AUTHENTICATED ENDPOINTS */
+/* SYSTEM ENDPOINTS */
 
-app.get("/camper/:camper_id", isLoggedIn(0), (req, res) => {
-	connection.query("SELECT * FROM spark_user WHERE camper_id=?", req.params.camper_id, (err, camper_info) => {
-		if (err) throw new Error("No camper under this information");
-
-		res.render("home", {
-			BALANCE: camper_info[0].balance
-		});
+app.get("/", isLoggedIn(0), (req, res) => {
+	res.render("home", {
+		BALANCE: req.user.staffer > 1 ? '∞' : req.user.balance
 	});
 });
 
-app.get("/staffer", isLoggedIn(1), (req, res) => {
-	res.end("Staffer level access!");
-});
-
 app.get("/admin", isLoggedIn(2), (req, res) => {
+	// TODO: render admin frontend
 	res.end("Admin level access!");
 });
 
 /* AUTHENTICATION ENDPOINTS */
 
-app.get("/", (req, res) => {
-	res.sendFile(__dirname + "/views/initial.html");
-});
-
-app.post("/login", (req, res) => {
-	// validate required info (TODO: validate formatting)
-	// remove anything besides numbers?? -- frontend validation as well
-	if (!req.body.camper_id || !req.body.pin) {
-		res.end("no fields"); // TODO: error handling
-		return;
-	}
+app.post("/login", (req, res, next) => {
+	// validate required info present
+	if (!req.body.camper_id || !req.body.pin)
+		return next(new LoginError("You need to provide both an ID and a PIN to log in."));
 	// check PIN against MySQL
 	connection.query('SELECT * FROM spark_user JOIN registration.camper ON spark_user.camper_id = registration.camper.id WHERE camper_id = ? AND pin = ?;', [req.body.camper_id, req.body.pin], (err, camper) => {
-		console.error(err);
-		if (err || !camper || !camper[0]) {
-			res.end("no db"); // TODO: error handling
-			return;
-		}
+		if (err) return next(err);
+		if (!camper || !camper[0]) return next(new LoginError("Incorrect ID or PIN."));
 		req.session.user = camper[0];
-		if (camper[0].staffer == 0) res.redirect("/camper/" + camper[0].camper_id);
+		res.redirect("/");
 	});
 });
 
@@ -126,14 +115,18 @@ app.get("/logout", (req, res) => {
 	res.redirect("/");
 });
 
-/* LISTENERS */
+/* ERROR HANDLING CHAIN */
 
-app.use(function(err, req, res, next) {
-	console.error(err.stack);
-	res.render("error", {
-		ERROR_MESSAGE: err.message
-	});
+app.use(function(err, req, res, next) {	// handle all other thrown errors
+	console.error(err);
+	if (err.login)	// handle login errors
+		res.render("initial", err.message ? { MESSAGE: err.message } : {} );
+	else {			// handle all other errors
+		res.render("error", { ERROR_MESSAGE: err.message });
+	}
 });
+
+/* LISTENERS */
 
 io.on('connection', socket => {
 	console.log("connected");

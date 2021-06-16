@@ -10,7 +10,7 @@ CREATE TABLE spark_user (
 	balance DOUBLE NOT NULL,
 	last_login DATETIME,
 	slack_id VARCHAR(255),
-	camp_name VARCHAR(255)
+	camp_name VARCHAR(255),
 	FOREIGN KEY (`camper_id`) REFERENCES registration.camper (`id`) ON DELETE CASCADE
 );
 

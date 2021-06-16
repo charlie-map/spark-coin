@@ -14,11 +14,14 @@
 	</head>
 	<body>
 		<div class="container">
-			<div class="spark-logo">
+			<div style="position: absolute; top: 20px" class="spark-logo">
 				<a href="https://summerspark.stab.org"></a>
 			</div>
 
-			<h1><span style="font-family: 'Arial'; margin-top: 20px;">⚡</span>{{BALANCE}}</h1>
+			<div class="balance">
+				<span style="font-family: 'Arial'; font-size: 75px; margin-right: 10px">⚡</span>
+				<h1 id="balance_display">{{BALANCE}}</h1>
+			</div>
 		</div>
 
 		<script src="/socket.io/socket.io.js"></script>

@@ -14,7 +14,13 @@
 	</head>
 	<body>
 		<div class="container">
-			<div class="spark-logo"><a href="https://summerspark.stab.org"></a></div>
+			<div class="error-message">
+				{{MESSAGE}}
+			</div>
+			
+			<div class="spark-logo">
+				<a href="https://summerspark.stab.org"></a>
+			</div>
 
 			<form method="POST" action="/login">
 				<input type="text" name="camper_id" placeholder="Your ID#" pattern="[0-9]+">

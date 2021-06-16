@@ -78,3 +78,21 @@ input:invalid {
 #submission:hover {
 	cursor: pointer;
 }
+
+.balance {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+}
+
+#balance_display {
+	font-size: 65px;
+	transition: 1s ease;
+}
+
+#balance_display.changing {
+	transition: 1s ease;
+	color: transparent;
+	text-shadow: 0 0 8px #000;
+}

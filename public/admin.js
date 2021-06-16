@@ -64,6 +64,62 @@ $(window).on('resize', function() {
 	$(".shake_balance").css("left", $(".lightning-bolt").offset().left + 70 + "px");
 });
 
+function pull_inventory(admin_or_all) {
+	let get_request = admin_or_all == "admin" ? "" : "/all";
+	$.ajax("/admin/inventory" + get_request, {
+
+		success: function(all_inventory) {
+			console.log(all_inventory);
+
+			if (admin_or_all == "admin") $(".inner-inventory.admin").empty();
+			else if (admin_or_all == "all") $(".inner-inventory.all").empty();
+
+			all_inventory.forEach(invent => {
+
+				let inventory_item = "<div id='" + invent.id + "'>" +
+					"<div class='display-styling-inventory'>" +
+					"<div style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'" +
+					"class='spark-logo-inventory'></div>" +
+					"<div class='item-info'>" +
+					"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
+					"<ion-icon name='chevron-forward-outline'></ion-icon>" +
+					"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "❓❓❓") + "</div>" +
+					"</div>" +
+					"<button id='" + invent.id + "' class='purchase-item'>" +
+					"<span class='lightning-bolt-button'>⚡</span>" +
+					"<span class='price'>" + invent.price + "</span>" +
+					"</button>" +
+					"</div>" +
+					"<div class='inventory-descript'>" + invent.description + "</div>" +
+					"</div>";
+
+				if (admin_or_all == "admin") $(".inner-inventory.admin").append(inventory_item);
+				else if (admin_or_all == "all") $(".inner-inventory.all").append(inventory_item);
+			});
+		}
+	});
+}
+
+$(".admin-inventory-select").click(function() {
+	$(".inner-inventory.all").removeClass('selected');
+	$(".inner-inventory.admin").addClass('selected');
+
+	$(".all-inventory-select").removeClass('button-selected');
+	$(".admin-inventory-select").addClass('button-selected');
+
+	pull_inventory("admin");
+});
+
+$(".all-inventory-select").click(function() {
+	$(".inner-inventory.admin").removeClass('selected');
+	$(".inner-inventory.all").addClass('selected');
+
+	$(".admin-inventory-select").removeClass('button-selected');
+	$(".all-inventory-select").addClass('button-selected');
+
+	pull_inventory("all");
+});
+
 $(".icon-div").click(function() {
 	if ($(this).hasClass('open-inventory')) {
 		if ($(".inventory-popup").hasClass('open')) {
@@ -71,34 +127,7 @@ $(".icon-div").click(function() {
 			return;
 		}
 
-		$.ajax("/admin/inventory", {
-
-			success: function(all_inventory) {
-				$(".inner-inventory.admin").empty();
-
-				all_inventory.forEach(invent => {
-
-					let inventory_item = "<div id='" + invent.id + "'>" +
-						"<div class='display-styling-inventory'>" +
-						"<div style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'" +
-						"class='spark-logo-inventory'></div>" +
-						"<div class='item-info'>" +
-						"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
-						"<ion-icon name='chevron-forward-outline'></ion-icon>" +
-						"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "❓❓❓") + "</div>" +
-						"</div>" +
-						"<button id='" + invent.id + "' class='purchase-item'>" +
-						"<span class='lightning-bolt-button'>⚡</span>" +
-						"<span class='price'>" + invent.price + "</span>" +
-						"</button>" +
-						"</div>" +
-						"<div class='inventory-descript'>" + invent.description + "</div>" +
-						"</div>";
-
-					$(".inner-inventory.admin").append(inventory_item);
-				});
-			}
-		});
+		pull_inventory("admin")
 
 		$(".inventory-popup").addClass('open');
 	} else if ($(this).hasClass('send-item')) {

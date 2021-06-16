@@ -367,10 +367,11 @@ input:invalid {
 }
 
 .inner-inventory {
-	
+	display: none;
 }
 
 .selected {
+	display: block;
 	border-top: 10px #00a6a6 solid;
 	width: 100%;
 	height: calc(100% - 5.5%);

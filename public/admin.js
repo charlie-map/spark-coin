@@ -84,11 +84,9 @@ function pull_inventory(admin_or_all) {
 
 			all_inventory.forEach(invent => {
 
-				console.log(invent.active);
-
 				let inventory_item = "<div id='" + invent.id + "item' class='" + (invent.active == 0 ? "non-active" : "") + "'>" +
 					"<div class='display-styling-inventory'>" +
-					"<div id='" + invent.id + "' style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'" +
+					"<div id='" + invent.id + "' style='background-image: " + (invent.image_url ? "url(" + invent.image_url + ");'" : "url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'") +
 					"class='spark-logo-inventory remove-hover'></div>" +
 					"<div class='item-info'>" +
 					"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
@@ -176,6 +174,10 @@ function popout_alert(message) {
 }
 
 $(".close-inventory").click(() => {
+	$(".add-item-inventory").children("ion-icon").removeClass('open');
+	$(".add-item-raffle").children("ion-icon").removeClass('open');
+	$(".add-item-inventory-popup").removeClass('open');
+	$(".add-item-raffle-popup").removeClass('open');
 	$(".inventory-popup").removeClass('open');
 });
 
@@ -203,13 +205,11 @@ $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function
 		$.ajax({
 			type: "DELETE",
 			url: "/admin/inventory",
-			dataType: "html",
 			data: {
 				id: this.id
 			},
 			success: function(id) {
 				$("#" + id + "item").css("background", "#bd4881");
-				$("#" + id + "item").css("border-bottom", "1px #bd4881 solid;");
 			}
 		});
 
@@ -222,26 +222,92 @@ $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function
 	}
 });
 
-$(".add-item-inventory").click(function() {
+function inventory_change() {
 	$(".add-item-raffle-popup").removeClass('open');
 	$(".add-item-raffle").children("ion-icon").removeClass('open');
 	if ($(".add-item-inventory-popup").hasClass('open')) {
+		$(".inventory-adding").removeClass('open');
 		$(".add-item-inventory").children("ion-icon").removeClass('open');
 		$(".add-item-inventory-popup").removeClass('open');
 	} else {
+		$(".inventory-adding").addClass('open');
 		$(".add-item-inventory").children("ion-icon").addClass('open');
 		$(".add-item-inventory-popup").addClass('open');
 	}
-});
+}
 
-$(".add-item-raffle").click(function() {
+$(".add-item-inventory").click(inventory_change);
+
+function raffle_change() {
 	$(".add-item-inventory-popup").removeClass('open');
 	$(".add-item-inventory").children("ion-icon").removeClass('open');
 	if ($(".add-item-raffle-popup").hasClass('open')) {
+		$(".inventory-adding").removeClass('open');
 		$(".add-item-raffle").children("ion-icon").removeClass('open');
 		$(".add-item-raffle-popup").removeClass('open');
 	} else {
+		$(".inventory-adding").addClass('open');
 		$(".add-item-raffle").children("ion-icon").addClass('open');
 		$(".add-item-raffle-popup").addClass('open');
 	}
+}
+
+$(".add-item-raffle").click(raffle_change);
+
+$("#submit-add-inventory-item").click(function(event) {
+	event.preventDefault();
+
+	$.ajax({
+		type: "PUT",
+		url: "/admin/inventory",
+		dataType: "text",
+		data: {
+			item_name: $("#item_name_value1").val(),
+			price: $("#price_value1").val(),
+			quantity: $("#quantity_value1").val(),
+			description: $("#item_description1").val(),
+			image_url: $("#item_image1").val()
+		},
+		success: function() {
+			popout_alert("Added to inventory!");
+			inventory_change();
+		},
+		error: function(error) {
+			console.log(error.responseText);
+			popout_alert(error.responseText);
+		}
+	});
+});
+
+$("#submit-add-raffle-item").click(function(event) {
+	event.preventDefault();
+
+	$.ajax({
+		type: "PUT",
+		url: "/admin/inventory/raffle",
+		dataType: "text",
+		data: {
+			item_name: $("#item_name_value2").val(),
+			price: $("#price_value2").val(),
+			quantity: $("#quantity_value2").val(),
+			description: $("#item_description2").val(),
+			image_url: $("#item_image2").val()
+		},
+		success: function(error) {
+			if (error) {
+				popout_alert(error);
+			} else {
+				popout_alert("Added to raffle!");
+				raffle_change();
+			}
+		}
+	});
+});
+
+$(".raffle-settings").click(function() {
+	$(".raffle-settings-popup").addClass("open");
+});
+
+$(".close-raffle-settings").click(function() {
+	$(".raffle-settings-popup").removeClass("open");
 });

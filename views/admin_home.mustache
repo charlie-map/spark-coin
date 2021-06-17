@@ -5,6 +5,7 @@
 		<meta charset="utf-8"/>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 		<script style="display: none" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons.js"></script>
 		<link rel="stylesheet" href="/front.css"/>
@@ -35,6 +36,9 @@
 				<div class="icon-div send-item">
 					<ion-icon class="icon-objects" name="send-outline"></ion-icon>
 				</div>
+				<div class="icon-div raffle-settings">
+					<ion-icon class="icon-objects" name="cash-outline"></ion-icon>
+				</div>
 			</div>
 			<div class="inventory-popup">
 				<h1>Current Inventory</h1>
@@ -42,30 +46,38 @@
 					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
 				</div>
 				<div class="choose-inventory">
-					<div class="selection-menu-bar-admin button-align">
-						<button class="add-item-inventory">
+					<div class="selection-and-inventory">
+						<div class="selection-menu-bar-admin button-align">
+							<button class="add-item-inventory">
 							<ion-icon name="add-outline"></ion-icon>&nbsp;&nbsp;Inventory
-						</button>
-						<div class="add-item-inventory-popup">
-							<h1>Add an Inventory Item</h1>
-							<form method="PUT" action="/admin/inventory">
-								<input type="text" name="item_name" id="item_name_value1" placeholder="Item Name">
-								<input type="number" name="price" id="price_value1" placeholder="Price">
-								<input type="number" name="quantity" id="quantity_value1" placeholder="Quantity" pattern="[0-9]+">
-								<input type="submit" value="Send" class="submit-button" id="submit-add-inventory-item">
-							</form>
-						</div>
-						<button class="add-item-raffle">
+							</button>
+							<button class="add-item-raffle">
 							<ion-icon name="add-outline"></ion-icon>&nbsp;&nbsp;Raffle
-						</button>
-						<div class="add-item-raffle-popup">
-							<h1>Add a Raffle Item</h1>
-							<form method="PUT" action="/admin/raffle">
-								<input type="text" name="item_name" id="item_name_value1" placeholder="Item Name">
-								<input type="number" name="price" id="price_value1" placeholder="Price">
-								<input type="number" name="quantity" id="quantity_value1" placeholder="Quantity" pattern="[0-9]+">
-								<input type="submit" value="Send" class="submit-button" id="submit-add-raffle-item">
-							</form>
+							</button>
+						</div>
+						<div class="inventory-adding">
+							<div class="add-item-inventory-popup">
+								<h1>Add an Inventory Item</h1>
+								<form method="PUT" action="/admin/inventory">
+									<input type="text" name="item_name" id="item_name_value1" placeholder="Item Name">
+									<input type="number" name="price" id="price_value1" placeholder="Price">
+									<input type="number" name="quantity" id="quantity_value1" placeholder="Quantity" pattern="[0-9]+">
+									<input type="text" name="item_description" id="item_description1" placeholder="Item Description">
+									<input type="text" name="item_image" id="item_image1" placeholder="Item Image URL">
+									<input type="submit" value="Send" class="submit-button" id="submit-add-inventory-item">
+								</form>
+							</div>
+							<div class="add-item-raffle-popup">
+								<h1>Add a Raffle Item</h1>
+								<form method="PUT" action="/admin/raffle">
+									<input type="text" name="item_name" id="item_name_value2" placeholder="Item Name">
+									<input type="number" name="price" id="price_value2" placeholder="Price">
+									<input type="number" name="quantity" id="quantity_value2" placeholder="Quantity" pattern="[0-9]+">
+									<input type="text" name="item_description" id="item_description2" placeholder="Item Description">
+									<input type="text" name="item_image" id="item_image2" placeholder="Item Image URL">
+									<input type="submit" value="Send" class="submit-button" id="submit-add-raffle-item">
+								</form>
+							</div>
 						</div>
 					</div>
 					<div class="button-align">
@@ -87,6 +99,12 @@
 					<input type="text" name="message" id="message_send_item" placeholder="Message">
 					<input type="submit" value="Send" class="submit-button" id="submit-sparks">
 				</form>
+			</div>
+			<div class="raffle-settings-popup">
+				<h1>Raffle Settings</h1>
+				<div class="close-raffle-settings">
+					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
+				</div>
 			</div>
 		</div>
 		

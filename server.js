@@ -377,9 +377,8 @@ app.use(function(err, req, res, next) { // handle all other thrown errors
 		} : {});
 	else { // handle all other errors
 		console.error(err);
-		res.render("error", {
-			ERROR_MESSAGE: err.message
-		});
+		res.setHeader("Content-Type", "text/plain");
+		res.status(500).end(" Error: " + err.message);
 	}
 });
 

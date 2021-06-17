@@ -3,6 +3,16 @@ CREATE DATABASE sparkcoin;
 
 USE sparkcoin;
 
+CREATE TABLE settings (
+	name VARCHAR(255) NOT NULL,
+	value INT NOT NULL,
+	PRIMARY KEY (name)	
+);
+
+INSERT INTO settings (name, value) VALUES ('raffle', 0);
+INSERT INTO settings (name, value) VALUES ('starter_coins', 10);
+INSERT INTO settings (name, value) VALUES ('staff_coins', 250);
+
 CREATE TABLE spark_user (
 	camper_id INT NOT NULL,
 	staffer TINYINT,
@@ -11,6 +21,7 @@ CREATE TABLE spark_user (
 	last_login DATETIME,
 	slack_id VARCHAR(255),
 	camp_name VARCHAR(255),
+	PRIMARY KEY (camper_id),
 	FOREIGN KEY (`camper_id`) REFERENCES registration.camper (`id`) ON DELETE CASCADE
 );
 

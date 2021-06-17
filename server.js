@@ -67,9 +67,7 @@ let sess = session({
 app.use(sess);
 
 let user_sockets = {};
-
-let RAFFLE_MODE = 0;
-const DEFAULT_START = 10;
+let settings = {};
 
 /* BOTTOMWARE */
 
@@ -97,8 +95,8 @@ function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 	return (req, res, next) => {
 		if (!req.session || !req.session.user)
 			next(new LoginError());
-		else if (role && req.session.user.staffer < role)
-			next(new Error("You aren't allowed to do that!"));
+		else if (role && req.session.user.staffer != role)
+			next(new LoginError("You aren't allowed to do that!"));
 		else {
 			req.user = req.session.user;
 			next();
@@ -109,6 +107,12 @@ function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 /* SYSTEM ENDPOINTS */
 
 app.get("/", isLoggedIn(), (req, res, next) => {
+	if (req.user.staffer == 2) {
+		// render admin page
+		return res.render("admin_home", {
+			BALANCE: '∞'
+		});
+	}
 	connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
 		if (err || !result) return next(new Error('Database error.'));
 		req.user.balance = result[0].balance;
@@ -119,32 +123,21 @@ app.get("/", isLoggedIn(), (req, res, next) => {
 });
 
 app.get("/raffle", isLoggedIn(), (req, res) => {
-	res.end(RAFFLE_MODE);
-});
-
-app.post("/transfer", isLoggedIn(), (req, res) => {
-	// TODO: Trigger UI Change (both)
-});
-
-/* CAMPER ENDPOINTS */
-
-app.post("/purchase", isLoggedIn(0), (req, res) => {
-	// TODO: Trigger Slack
-	// TODO: Trigger UI Change (camper)
+	res.end(""+settings.raffle);
 });
 
 /* STAFFER ENDPOINTS */
 
 app.get("/inventory", isLoggedIn(1), (req, res) => {
-	connection.query("SELECT * FROM inventory LEFT JOIN tx ON inventory.id = tx.inventory_item WHERE camper_id = ?", [req.user.id], (err, result) => {
+	connection.query("SELECT * FROM inventory LEFT JOIN tx ON inventory.id = tx.inventory_item WHERE camper_id = ?;", [req.user.id], (err, result) => {
 		if (err) return next(err);
 		res.json(result);
 	});
 });
 
 app.put("/inventory", isLoggedIn(1), (req, res) => {
-	if (!req.body.item_name || !req.body.price || !req.body.quantity) return next(new Error('Required field missing.'));
-	connection.query("INSERT INTO inventory (camper_id, item_name, price, quantity, active) VALUES (?, ?, ?, ?, 1);", [req.user.id, req.body.item_name, req.body.price, req.body.quantity], (err) => {
+	if (!req.body.item_name || !req.body.description || !req.body.image_url || !req.body.price || !req.body.quantity) return next(new Error('Required field missing.'));
+	connection.query("INSERT INTO inventory (camper_id, item_name, description, image_url, price, quantity, active) VALUES (?, ?, ?, ?, ?, ?, 1);", [req.user.id, req.body.item_name, req.body.description, req.body.image_url, req.body.price, req.body.quantity], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
@@ -160,10 +153,19 @@ app.delete("/inventory", isLoggedIn(1), (req, res) => {
 
 /* ADMIN ENDPOINTS */
 
-app.get("/admin", isLoggedIn(2), (req, res) => {
-	// render admin page
-	res.render("admin_home", {
-		BALANCE: '∞'
+app.get("/admin/setting", isLoggedIn(2), (req, res, next) => {
+	connection.query("SELECT * FROM settings;", (err, result) => {
+		if (err) return next(err);
+		res.json(result);
+	});
+})
+
+app.post("/admin/setting", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.name || !req.body.value) return next(new Error('Required field missing.'));
+	connection.query("UPDATE settings SET value = ? WHERE name = ?;", [req.body.value, req.body.name], (err) => {
+		if (err) return next(err);
+		settings[req.body.name] = parseInt(req.body.value);
+		res.end();
 	});
 });
 
@@ -197,9 +199,16 @@ app.delete("/admin/inventory", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
+app.get("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
+	connection.query("SELECT * FROM raffle_item WHERE active = 1;", (err, result) => {
+		if (err) return next(err);
+		res.json(result);
+	});
+});
+
 app.put("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
 	if (!req.body.item_name || !req.body.description) return next(new Error('Required field missing.'));
-	connection.query("INSERT INTO raffle_item (item_name, description, image_url) VALUES (?, ?, ?);", [req.body.item_name, req.body.description, req.body.image_url], (err) => {
+	connection.query("INSERT INTO raffle_item (item_name, description, image_url, active) VALUES (?, ?, ?, 1);", [req.body.item_name, req.body.description, req.body.image_url], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
@@ -207,7 +216,7 @@ app.put("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
 
 app.delete("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
 	if (!req.body.id) return next(new Error('Required field missing.'));
-	connection.query("DELETE FROM raffle_item WHERE id = ?;", [req.body.id], (err) => {
+	connection.query("UPDATE raffle_item SET active = 0 WHERE id = ?;", [req.body.id], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
@@ -222,7 +231,7 @@ app.post("/admin/load", isLoggedIn(2), async (req, res, next) => {
 			let camper_promise = campers.map((camper) => {
 				return new Promise((resolve, reject) => {
 					let new_pin = Math.floor(1000 + Math.random() * 9000);
-					connection.query("INSERT INTO spark_user (camper_id, staffer, pin, balance, last_login, slack_id) VALUES (?, 0, ?, ?, ?, NULL);", [camper.camper_id, new_pin, DEFAULT_START, date], (err) => {
+					connection.query("INSERT INTO spark_user (camper_id, staffer, pin, balance, last_login, slack_id) VALUES (?, 0, ?, ?, ?, NULL) ON DUPLICATE KEY UPDATE balance = balance + ?;", [camper.camper_id, new_pin, settings.starter_coins, date, settings.starter_coins], (err) => {
 						if (err) reject(err);
 						camper.pin = new_pin;
 						resolve(camper);
@@ -239,7 +248,7 @@ app.post("/admin/reset", isLoggedIn(2), (req, res, next) => {
 	if (!req.body.camper_id) return next(new Error('Required field missing.'));
 	let new_pin = Math.floor(1000 + Math.random() * 9000);
 	connection.query("UPDATE spark_user SET pin = ? WHERE camper_id = ?;", [new_pin, req.body.camper_id], (err) => {
-		res.end(new_pin);
+		res.end(""+new_pin);
 	});
 });
 
@@ -250,12 +259,22 @@ app.get("/admin/campers", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
-app.post("/admin/raffle", isLoggedIn(2), (req, res) => {
-	RAFFLE_MODE = !RAFFLE_MODE;
-	res.end("" + RAFFLE_MODE);
+app.post("/admin/raffle", isLoggedIn(2), (req, res, next) => {
+	settings.raffle = !settings.raffle;
+	connection.query('UPDATE settings SET value = ? WHERE name = \'raffle\';', [settings.raffle], (err) => {
+		if (err) return next(err);
+		res.end("" + settings.raffle);
+	});
 });
 
-app.get("/admin/raffle/drawing", isLoggedIn(2), async (req, res, next) => {
+app.delete("/admin/raffle", isLoggedIn(2), (req, res, next) => {
+	connection.query('UPDATE raffle_item SET active = 0;', (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
+app.get("/admin/raffle", isLoggedIn(2), async (req, res, next) => {
 	try {
 		// get all raffle items
 		let raffle_items = await new Promise((resolve, reject) => {
@@ -302,8 +321,15 @@ app.get("/admin/raffle/drawing", isLoggedIn(2), async (req, res, next) => {
 	}
 });
 
-app.get("/admin/log", isLoggedIn(2), (req, res, next) => {
-	connection.query("SELECT * FROM tx ORDER BY time DESC", (err, result) => {
+app.get("/admin/log/all", isLoggedIn(2), (req, res, next) => {
+	connection.query("SELECT * FROM tx ORDER BY tx_time DESC;", (err, result) => {
+		if (err) return next(err);
+		res.json(result);
+	});
+});
+
+app.get("/admin/log/purchase", isLoggedIn(2), (req, res, next) => {
+	connection.query("SELECT * FROM tx INNER JOIN inventory ON tx.inventory_item = inventory.id WHERE inventory.active = 1 ORDER BY tx_time DESC;", (err, result) => {
 		if (err) return next(err);
 		res.json(result);
 	});
@@ -320,9 +346,7 @@ app.post("/login", (req, res, next) => {
 		if (err) return next(err);
 		if (!camper || !camper[0]) return next(new LoginError("Incorrect ID or PIN."));
 		req.session.user = camper[0];
-
-		if (req.session.user.staffer >= 2) res.redirect("/admin");
-		else res.redirect("/");
+		res.redirect("/");
 	});
 });
 
@@ -369,7 +393,7 @@ io.on('connection', (socket) => {
 	socket.on('inventory_get', (cb) => {
 		// if raffle, send raffle items instead
 		let query_string;
-		if (RAFFLE_MODE)
+		if (settings.raffle)
 			query_string = "SELECT id, item_name, description, image_url, 'RAFFLE' AS owner FROM raffle_item WHERE active = 1;";
 		else
 			query_string = "SELECT id, item_name, description, image_url, camp_name AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id WHERE active = 1 AND quantity > 0;"
@@ -384,7 +408,7 @@ io.on('connection', (socket) => {
 		try {
 			// get data about inventory item & verify quantity / active
 			let item = await new Promise((resolve, reject) => {
-				if (RAFFLE_MODE) {
+				if (settings.raffle) {
 					connection.query("SELECT * FROM raffle_item WHERE id = ?;", [item_id], (err, result) => {
 						if (err) reject(err);
 						if (!result) reject("Invalid raffle item.");
@@ -414,7 +438,7 @@ io.on('connection', (socket) => {
 			bal -= item.price;
 			bal = roundTo(bal, 3);
 
-			if (RAFFLE_MODE) {
+			if (settings.raffle) {
 				await new Promise((resolve, reject) => {
 					connection.query("UPDATE spark_user SET balance = ? WHERE camper_id = ?;", [bal, socket.user.camper_id], (err) => {
 						if (err) reject(err);
@@ -544,5 +568,11 @@ io.on('connection', (socket) => {
 });
 
 server.listen(9988, () => {
-	console.log("server go vroom");
+	connection.query("SELECT * FROM settings;", (err, result) => {
+		if (err) console.error("ERROR RESTORING SYSTEM SETTINGS");
+		result.forEach((setting) => {
+			settings[setting.name] = setting.value;
+		});
+		console.log("server go vroom");
+	});
 });

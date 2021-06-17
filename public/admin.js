@@ -10,6 +10,7 @@ $(document).on({
 });
 
 $("#shake_balance").hide();
+$(".inventory-popup").hide();
 
 let update_balance_shakers = $(".container").find(".shake_balance");
 
@@ -135,6 +136,8 @@ $(".icon-div").click(function() {
 			return;
 		}
 
+		$(".inventory-popup").show();
+
 		pull_inventory("admin")
 
 		$(".inventory-popup").addClass('open');
@@ -179,6 +182,10 @@ $(".close-inventory").click(() => {
 	$(".add-item-inventory-popup").removeClass('open');
 	$(".add-item-raffle-popup").removeClass('open');
 	$(".inventory-popup").removeClass('open');
+
+	setTimeout(function() { // hide object fully
+		$(".inventory-popup").hide();
+	}, 1000);
 });
 
 $(".inner-inventory").on("click", ".purchase-item", function() {
@@ -312,7 +319,7 @@ $(".raffle-settings").click(function() {
 		url: "/admin/raffle/value",
 		dataType: "text",
 		success: function(raffle_value) {
-			
+
 			if (raffle_value == "true" || parseFloat(raffle_value, 10) == 1) {
 				$("#clicking-raffle-toggle").trigger('click');
 			}

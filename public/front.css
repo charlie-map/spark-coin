@@ -12,7 +12,6 @@ html {
 body {
 	background: white;
 	overflow: hidden;
-	overflow-y: scroll;
 	font-weight: bold;
 	margin: 0;
 	padding: 0;
@@ -202,6 +201,10 @@ input:invalid {
 	transform: scale(4);
 }
 
+.icon-objects:hover {
+	cursor: pointer;
+}
+
 .inventory-popup {
 	position: absolute;
 	background: white;
@@ -244,10 +247,15 @@ input:invalid {
 .inner-inventory > div {
 	position: relative;
 	background: #f7e88f;
-	margin-top: 5px;
+	margin-top: 2px;
+	margin-bottom: 5px;
 	padding: 0 1px 1px 1px;
 	width: 90%;
 	left: 5%;
+}
+
+.inner-inventory > div:last-child {
+	margin-bottom: 20px;
 }
 
 .display-styling-inventory {
@@ -406,8 +414,10 @@ input:invalid {
 .selected {
 	display: block;
 	border-top: 10px #00a6a6 solid;
+	border-bottom: 5px #00a6a6 solid;
 	width: 100%;
 	height: calc(100% - 11%);
+	overflow-y: scroll;
 	background: #00a6a6;
 	z-index: 50;
 }

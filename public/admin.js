@@ -305,7 +305,18 @@ $("#submit-add-raffle-item").click(function(event) {
 });
 
 $(".raffle-settings").click(function() {
-	$(".raffle-settings-popup").addClass("open");
+	$.ajax({
+		type: "GET",
+		url: "/admin/raffle/value",
+		dataType: "text",
+		success: function(raffle_value) {
+
+			if (parseFloat(raffle_value, 10) >= 1)
+				$("#clicking-raffle-toggle").trigger('click');
+
+			$(".raffle-settings-popup").addClass("open");
+		}
+	});
 });
 
 $(".close-raffle-settings").click(function() {

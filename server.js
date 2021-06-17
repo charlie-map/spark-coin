@@ -272,7 +272,7 @@ app.get("/admin/campers", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
-app.get("/admin/raffle/value", isLoggedIn, (req, res, next) => {
+app.get("/admin/raffle/value", isLoggedIn(2), (req, res, next) => {
 	res.end("" + settings.raffle);
 });
 

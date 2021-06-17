@@ -99,9 +99,22 @@ function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 			next(new LoginError("You aren't allowed to do that!"));
 		else {
 			req.user = req.session.user;
-			next();
+			updateLogin(req.user.camper_id).then(() => {
+				next();
+			}, (err) => {
+				next(new LoginError(err));
+			});
 		}
 	};
+}
+
+function updateLogin(camper_id) {
+	return new Promise((resolve, reject) => {
+		connection.query("UPDATE spark_user SET last_login = ? WHERE camper_id = ?;", [new Date(), camper_id], (err) => {
+			if (err) reject(err);
+			resolve();
+		});
+	});
 }
 
 /* SYSTEM ENDPOINTS */
@@ -384,15 +397,27 @@ io.on('connection', (socket) => {
 			user_sockets[data.user.camper_id] = socket;
 		});
 
-	socket.on('inventory_get', (cb) => {
+	socket.on('tx_get', (cb) => {
+		if (!socket.user) return cb("Not logged in.");
+		updateLogin(socket.user.camper_id).catch(() => {return;});
+		connction.query("SELECT * FROM tx WHERE sending_id = ? OR receiving_id = ? ORDER BY tx_time DESC;", [socket.user.camper_id, socket.user.camper_id], (err, result) => {
+			if (err || !result) cb([]);
+			cb(result);
+		});
+	});
+
+	socket.on('inventory_get', async (cb) => {
+		if (!socket.user) return cb("Not logged in.");
+		updateLogin(socket.user.camper_id).catch(() => {return;});
 		// if raffle, send raffle items instead
 		let query_string;
 		if (settings.raffle)
-			query_string = "SELECT id, item_name, description, image_url, 'RAFFLE' AS owner FROM raffle_item WHERE active = 1;";
+			query_string = "SELECT id, item_name, description, image_url, 'RAFFLE' AS owner, 1 as price FROM raffle_item WHERE active = 1;";
 		else
 			query_string = "SELECT id, item_name, description, image_url, camp_name AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id WHERE active = 1 AND quantity > 0;"
 		// filter out no quantity items & only active items
 		connection.query(query_string, (err, result) => {
+			if (err || !result) cb([]);
 			cb(result);
 		});
 	});

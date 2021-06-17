@@ -112,9 +112,9 @@ app.get("/", isLoggedIn(), (req, res, next) => {
 	connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
 		if (err || !result) return next(new Error('Database error.'));
 		req.user.balance = result[0].balance;
-			res.render("home", {
-				BALANCE: req.user.balance
-			});
+		res.render("home", {
+			BALANCE: req.user.balance
+		});
 	});
 });
 
@@ -182,7 +182,7 @@ app.get("/admin/inventory/all", isLoggedIn(2), (req, res, next) => {
 });
 
 app.put("/admin/inventory", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.item_name || !req.body.price || !req.body.quantity) return next(new Error('Required field missing.'));
+	if (!req.body.item_name || !req.body.price || !req.body.quantity) return next(new Error('Error: Required field missing.||Send Error'));
 	connection.query("INSERT INTO inventory (camper_id, item_name, price, quantity, active) VALUES (NULL, ?, ?, ?, 1);", [req.body.item_name, req.body.price, req.body.quantity], (err) => {
 		if (err) return next(err);
 		res.end();
@@ -340,9 +340,15 @@ app.use(function(err, req, res, next) { // handle all other thrown errors
 		} : {});
 	else { // handle all other errors
 		console.error(err);
-		res.render("error", {
-			ERROR_MESSAGE: err.message
-		});
+		let err_handle = err.message.split("||");
+		if (err_handle[1].length) {
+			console.log(err_handle[0]);
+			res.end(err_handle[0]);
+		} else {
+			res.render("error", {
+				ERROR_MESSAGE: err.message
+			});
+		}
 	}
 });
 

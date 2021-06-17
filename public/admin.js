@@ -176,6 +176,10 @@ function popout_alert(message) {
 }
 
 $(".close-inventory").click(() => {
+	$(".add-item-inventory").children("ion-icon").removeClass('open');
+	$(".add-item-raffle").children("ion-icon").removeClass('open');
+	$(".add-item-inventory-popup").removeClass('open');
+	$(".add-item-raffle-popup").removeClass('open');
 	$(".inventory-popup").removeClass('open');
 });
 
@@ -222,26 +226,80 @@ $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function
 	}
 });
 
-$(".add-item-inventory").click(function() {
+function inventory_change() {
 	$(".add-item-raffle-popup").removeClass('open');
 	$(".add-item-raffle").children("ion-icon").removeClass('open');
 	if ($(".add-item-inventory-popup").hasClass('open')) {
+		$(".inventory-adding").removeClass('open');
 		$(".add-item-inventory").children("ion-icon").removeClass('open');
 		$(".add-item-inventory-popup").removeClass('open');
 	} else {
+		$(".inventory-adding").addClass('open');
 		$(".add-item-inventory").children("ion-icon").addClass('open');
 		$(".add-item-inventory-popup").addClass('open');
 	}
-});
+}
 
-$(".add-item-raffle").click(function() {
+$(".add-item-inventory").click(inventory_change);
+
+function raffle_change() {
 	$(".add-item-inventory-popup").removeClass('open');
 	$(".add-item-inventory").children("ion-icon").removeClass('open');
 	if ($(".add-item-raffle-popup").hasClass('open')) {
+		$(".inventory-adding").removeClass('open');
 		$(".add-item-raffle").children("ion-icon").removeClass('open');
 		$(".add-item-raffle-popup").removeClass('open');
 	} else {
+		$(".inventory-adding").addClass('open');
 		$(".add-item-raffle").children("ion-icon").addClass('open');
 		$(".add-item-raffle-popup").addClass('open');
 	}
+}
+
+$(".add-item-raffle").click(raffle_change);
+
+$("#submit-add-inventory-item").click(function(event) {
+	event.preventDefault();
+
+	$.ajax({
+		type: "PUT",
+		url: "/admin/inventory",
+		dataType: "html",
+		data: {
+			item_name: $("#item_name_value1").val(),
+			price: $("#price_value1").val(),
+			quantity: $("#quantity_value1").val()
+		},
+		success: function(error) {
+			if (error) {
+				popout_alert(error);
+			} else {
+				popout_alert("Added to inventory!");
+				inventory_change();
+			}
+		}
+	});
+});
+
+$("#submit-add-raffle-item").click(function(event) {
+	event.preventDefault();
+
+	$.ajax({
+		type: "PUT",
+		url: "/admin/inventory/raffle",
+		dataType: "html",
+		data: {
+			item_name: $("#item_name_value2").val(),
+			price: $("#price_value2").val(),
+			quantity: $("#quantity_value2").val()
+		},
+		success: function(error) {
+			if (error) {
+				popout_alert(error);
+			} else {
+				popout_alert("Added to raffle!");
+				raffle_change();
+			}
+		}
+	});
 });

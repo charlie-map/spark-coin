@@ -25,6 +25,7 @@ body {
 	align-items: center;
 	justify-content: center;
 	flex-direction: column;
+
 }
 
 .spark-logo {
@@ -87,6 +88,7 @@ input:invalid {
 	height: 150px;
 	background: white;
 	transition: 1s ease;
+	z-index: 200;
 }
 
 .message-background.open {
@@ -104,6 +106,7 @@ input:invalid {
 	display: flex;
 	align-items: center;
 	transition: 1s ease;
+	z-index: 200;
 }
 
 .message-alert h1 {
@@ -240,7 +243,8 @@ input:invalid {
 .inner-inventory > div {
 	position: relative;
 	background: #f7e88f;
-	border-bottom: 1px #f7e88f solid;
+	margin-top: 5px;
+	padding: 0 1px 1px 1px;
 	width: 90%;
 	left: 5%;
 }

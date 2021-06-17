@@ -184,8 +184,8 @@ app.get("/admin/inventory/all", isLoggedIn(2), (req, res, next) => {
 });
 
 app.put("/admin/inventory", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.item_name || !req.body.price || !req.body.quantity) return next(new Error('Error: Required field missing.||Send Error'));
-	connection.query("INSERT INTO inventory (camper_id, item_name, price, quantity, active) VALUES (NULL, ?, ?, ?, 1);", [req.body.item_name, req.body.price, req.body.quantity], (err) => {
+	if (!req.body.item_name || !req.body.description || !req.body.image_url || !req.body.price || !req.body.quantity) return next(new Error('Required field missing.'));
+	connection.query("INSERT INTO inventory (camper_id, item_name, description, image_url, price, quantity, active) VALUES (NULL, ?, ?, ?, ?, ?, 1);", [req.body.item_name, req.body.description, req.body.image_url, req.body.price, req.body.quantity], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
@@ -364,15 +364,8 @@ app.use(function(err, req, res, next) { // handle all other thrown errors
 		} : {});
 	else { // handle all other errors
 		console.error(err);
-		let err_handle = err.message.split("||");
-		if (err_handle[1].length) {
-			console.log(err_handle[0]);
-			res.end(err_handle[0]);
-		} else {
-			res.render("error", {
-				ERROR_MESSAGE: err.message
-			});
-		}
+		res.setHeader("Content-Type", "text/plain");
+		res.status(500).end(" Error: " + err.message);
 	}
 });
 

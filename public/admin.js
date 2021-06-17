@@ -303,3 +303,11 @@ $("#submit-add-raffle-item").click(function(event) {
 		}
 	});
 });
+
+$(".raffle-settings").click(function() {
+	$(".raffle-settings-popup").addClass("open");
+});
+
+$(".close-raffle-settings").click(function() {
+	$(".raffle-settings-popup").removeClass("open");
+});

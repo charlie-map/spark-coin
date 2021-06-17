@@ -272,6 +272,10 @@ app.get("/admin/campers", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
+app.get("/admin/raffle/value", isLoggedIn, (req, res, next) => {
+	res.end("" + settings.raffle);
+});
+
 app.post("/admin/raffle", isLoggedIn(2), (req, res, next) => {
 	settings.raffle = !settings.raffle;
 	connection.query('UPDATE settings SET value = ? WHERE name = \'raffle\';', [settings.raffle], (err) => {

@@ -208,7 +208,8 @@ $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function
 				id: this.id
 			},
 			success: function(id) {
-				$("#" + id + "item").remove();
+				$("#" + id + "item").css("background", "#bd4881");
+				$("#" + id + "item").css("border-bottom", "1px #bd4881 solid;");
 			}
 		});
 
@@ -218,5 +219,29 @@ $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function
 		$(this).css("background-image", "url(https://overfload.nyc3.cdn.digitaloceanspaces.com/b084ed39-4422-4d31-a1f6-7bf6a051d992)");
 
 		setTimeout(switch_background_image, 2500, this, current_background);
+	}
+});
+
+$(".add-item-inventory").click(function() {
+	$(".add-item-raffle-popup").removeClass('open');
+	$(".add-item-raffle").children("ion-icon").removeClass('open');
+	if ($(".add-item-inventory-popup").hasClass('open')) {
+		$(".add-item-inventory").children("ion-icon").removeClass('open');
+		$(".add-item-inventory-popup").removeClass('open');
+	} else {
+		$(".add-item-inventory").children("ion-icon").addClass('open');
+		$(".add-item-inventory-popup").addClass('open');
+	}
+});
+
+$(".add-item-raffle").click(function() {
+	$(".add-item-inventory-popup").removeClass('open');
+	$(".add-item-inventory").children("ion-icon").removeClass('open');
+	if ($(".add-item-raffle-popup").hasClass('open')) {
+		$(".add-item-raffle").children("ion-icon").removeClass('open');
+		$(".add-item-raffle-popup").removeClass('open');
+	} else {
+		$(".add-item-raffle").children("ion-icon").addClass('open');
+		$(".add-item-raffle-popup").addClass('open');
 	}
 });

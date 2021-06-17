@@ -46,9 +46,27 @@
 						<button class="add-item-inventory">
 							<ion-icon name="add-outline"></ion-icon>&nbsp;&nbsp;Inventory
 						</button>
+						<div class="add-item-inventory-popup">
+							<h1>Add an Inventory Item</h1>
+							<form method="PUT" action="/admin/inventory">
+								<input type="text" name="item_name" id="item_name_value1" placeholder="Item Name">
+								<input type="number" name="price" id="price_value1" placeholder="Price">
+								<input type="number" name="quantity" id="quantity_value1" placeholder="Quantity" pattern="[0-9]+">
+								<input type="submit" value="Send" class="submit-button" id="submit-add-inventory-item">
+							</form>
+						</div>
 						<button class="add-item-raffle">
 							<ion-icon name="add-outline"></ion-icon>&nbsp;&nbsp;Raffle
 						</button>
+						<div class="add-item-raffle-popup">
+							<h1>Add a Raffle Item</h1>
+							<form method="PUT" action="/admin/raffle">
+								<input type="text" name="item_name" id="item_name_value1" placeholder="Item Name">
+								<input type="number" name="price" id="price_value1" placeholder="Price">
+								<input type="number" name="quantity" id="quantity_value1" placeholder="Quantity" pattern="[0-9]+">
+								<input type="submit" value="Send" class="submit-button" id="submit-add-raffle-item">
+							</form>
+						</div>
 					</div>
 					<div class="button-align">
 						<button class="admin-inventory-select button-selected">Admin Inventory</button>

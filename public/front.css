@@ -663,13 +663,13 @@ input:invalid {
 .raffle-status h2 {
 	position: relative;
 	margin: 0;
-	top: -150px;
+	top: -120px;
 	left: 200px;
 }
 
 #test-slider {
 	position: relative;
-	top: -150px;
+	top: -120px;
 	width: 600px;
 	height: 350px;
 	margin: 0;

@@ -304,21 +304,41 @@ $("#submit-add-raffle-item").click(function(event) {
 	});
 });
 
+let real_click = 0;
+
 $(".raffle-settings").click(function() {
 	$.ajax({
 		type: "GET",
 		url: "/admin/raffle/value",
 		dataType: "text",
 		success: function(raffle_value) {
-
-			if (parseFloat(raffle_value, 10) >= 1)
+			
+			if (raffle_value == "true" || parseFloat(raffle_value, 10) == 1) {
 				$("#clicking-raffle-toggle").trigger('click');
+			}
 
+			real_click = 1;
 			$(".raffle-settings-popup").addClass("open");
 		}
 	});
 });
 
+$("#clicking-raffle-toggle").click(function() {
+
+	if (real_click) {
+
+		$.ajax({
+			type: "POST",
+			url: "/admin/raffle",
+			success: function(raffle_value) {
+
+				popout_alert("Updated Raffle to " + (raffle_value == "true" ? "on" : "off"));
+			}
+		});
+	}
+});
+
 $(".close-raffle-settings").click(function() {
 	$(".raffle-settings-popup").removeClass("open");
+	real_click = 0;
 });

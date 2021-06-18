@@ -18,6 +18,10 @@ body {
 	min-height: 100%;
 }
 
+button:hover {
+	cursor: pointer;
+}
+
 .container {
 	height: 100vh;
 	width: 100%;
@@ -255,7 +259,7 @@ input:invalid {
 }
 
 .inner-inventory > div:last-child {
-	margin-bottom: 20px;
+	margin-bottom: 30px;
 }
 
 .display-styling-inventory {
@@ -349,7 +353,7 @@ input:invalid {
 
 .button-align {
 	width: 100%;
-	height: 5%;
+	height: calc(5% + 10px);
 	display: flex;
 	flex-direction: row;
 	justify-content: space-evenly;
@@ -373,7 +377,7 @@ input:invalid {
 }
 
 .selection-menu-bar-admin {
-	height: 100% !important;
+	height: calc(5% + 10px);
 }
 
 .selection-menu-bar-admin > button {
@@ -606,56 +610,6 @@ input:invalid {
 	line-height: 200%;
 }
 
-@media only screen and (max-width: 500px), screen and (max-height: 700px) {
-	.send-item-popup {
-		position: absolute;
-		background: white;
-		top: -101%;
-		left: 0px;
-		width: 100%;
-		height: 100%;
-		border-bottom: 3px solid grey;
-		transition: 1s ease;
-		flex-direction: column;
-		justify-content: center;
-	}
-
-	.inner-inventory {
-		position: relative;
-	}
-
-	.inventory-adding {
-		left: 0px;
-		width: 100%;
-		height: calc(100% - 70px);
-		position: absolute;
-		z-index: -5;
-		transition: z-index 1s ease;
-	}
-
-	.inventory-adding.open {
-		z-index: 100;
-		transition: z-index 1s ease;
-	}
-
-	.inventory-adding > div {
-		transform: translate(0%, 0%) !important;
-		left: -100% !important;
-		top: 0px;
-		width: 100%;
-		height: 100%;
-		transition: left 1s ease !important;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
-
-	.inventory-adding > div.open {
-		left: 0px !important;
-		transition: left 1s ease;
-	}
-}
-
 .raffle-body {
 	height: calc(100% - 70px);
 	width: 100%;
@@ -663,7 +617,8 @@ input:invalid {
 
 .raffle-status {
 	width: 100%;
-	height: calc(100% - 70px);
+	height: 70px;
+	margin-top: 20px;
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
@@ -817,8 +772,6 @@ input:invalid {
   background-position: 25%;
 }
 
-
-
 #checking-box:checked + .toggle__bg .toggle__sphere {
   transform: translateX(250px) translateY(1px);
   box-shadow:  
@@ -829,4 +782,104 @@ input:invalid {
 
 #checking-box:checked + .toggle__bg .toggle__sphere-bg {
   transform: rotateY(180deg);
+}
+
+.raffle-drawing {
+	position: relative;
+	width: 80%;
+	height: 30px;
+	left: 10%;
+	top: 0px;
+	background: transparent;
+	border: 2px #f7e88f solid;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+@media only screen and (max-width: 500px), screen and (max-height: 700px) {
+	.send-item-popup {
+		position: absolute;
+		background: white;
+		top: -101%;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		border-bottom: 3px solid grey;
+		transition: 1s ease;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.inner-inventory {
+		position: relative;
+	}
+
+	.inventory-adding {
+		position: relative;
+		left: 0px;
+		width: 100%;
+		height: 0px;
+		z-index: -5;
+		transition: z-index 1s ease;
+		transition: height 1s ease;
+	}
+
+	.inventory-adding.open {
+		height: calc(100% - 70px);
+		z-index: 100;
+		transition: z-index 1s ease;
+		transition: height 1s ease;
+	}
+
+	.inventory-adding > div {
+		transform: translate(0%, 0%) !important;
+		left: -100% !important;
+		top: 0px;
+		width: 100%;
+		height: 100%;
+		transition: left 1s ease !important;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.inventory-adding > div.open {
+		left: 0px !important;
+		transition: left 1s ease;
+	}
+}
+
+@media only screen and (max-height: 700px) and (orientation: landscape) {
+	.inventory-adding {
+		position: relative;
+		left: 0px;
+		top: 0px;
+		width: 100%;
+		height: 0px;
+		z-index: -5;
+		transition: z-index 1s ease;
+		transition: height 1s ease;
+	}
+
+	.inventory-adding.open {
+		height: 100%;
+		z-index: 100;
+		transition: z-index 1s ease;
+		transition: height 1s ease;
+	}
+
+	.inventory-adding.open div {
+		display: block;
+		overflow-y: scroll;
+	}
+
+	.inventory-adding.open div h1 {
+		position: relative;
+		left: 10%;
+		text-align: center;
+	}
+
+	.inventory-adding.open input.submit-button {
+		margin-bottom: 25px;
+	}
 }

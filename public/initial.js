@@ -78,7 +78,7 @@ $(".icon-div").click(function() {
 
 				let inventory_item = "<div id='" + invent.id + "'>" +
 					"<div class='display-styling-inventory'>" +
-					"<div style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'" +
+					"<div style='background-image: " + (invent.image_url ? "url(" + invent.image_url + ");'" : "url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'") +
 					"class='spark-logo-inventory'></div>" +
 					"<div class='item-info'>" +
 					"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
@@ -93,7 +93,6 @@ $(".icon-div").click(function() {
 					"<div class='inventory-descript'>" + invent.description + "</div>" +
 					"</div>";
 
-				console.log(inventory_item);
 				$(".inner-inventory").append(inventory_item);
 			});
 		})

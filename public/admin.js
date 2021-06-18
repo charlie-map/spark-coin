@@ -75,20 +75,21 @@ $(window).on('resize', function() {
 });
 
 function pull_inventory(admin_or_all) {
-	let get_request = admin_or_all == "admin" ? "" : "/all";
+	let get_request = admin_or_all == "admin" ? "" : admin_or_all == "all" ? "/all" : "/raffle";
 	$.ajax("/admin/inventory" + get_request, {
 
 		success: function(all_inventory) {
 
 			if (admin_or_all == "admin") $(".inner-inventory.admin").empty();
 			else if (admin_or_all == "all") $(".inner-inventory.all").empty();
+			else if (admin_or_all == "raffle") $(".inner-inventory.raffle").empty();
 
 			all_inventory.forEach(invent => {
 
-				let inventory_item = "<div id='" + invent.id + "item' class='" + (invent.active == 0 ? "non-active" : "") + "'>" +
+				let inventory_item = "<div id='" + invent.id + "item" + (admin_or_all == "raffle" ? "raffle" : "") + "' class='" + (invent.active == 0 ? "non-active" : "") + "'>" +
 					"<div class='display-styling-inventory'>" +
 					"<div id='" + invent.id + "' style='background-image: " + (invent.image_url ? "url(" + invent.image_url + ");'" : "url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'") +
-					"class='spark-logo-inventory remove-hover'></div>" +
+					"class='spark-logo-inventory remove-hover " + admin_or_all + "'></div>" +
 					"<div class='item-info'>" +
 					"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
 					"<ion-icon name='chevron-forward-outline'></ion-icon>" +
@@ -96,7 +97,7 @@ function pull_inventory(admin_or_all) {
 					"</div>" +
 					"<button id='" + invent.id + "' class='purchase-item'>" +
 					"<span class='lightning-bolt-button'>⚡</span>" +
-					"<span class='price'>" + invent.price + "</span>" +
+					"<span class='price'>" + (invent.price == undefined || !invent.price ? 1 : invent.price) + "</span>" +
 					"</button>" +
 					"</div>" +
 					"<div class='inventory-descript'>" + invent.description + "</div>" +
@@ -104,6 +105,7 @@ function pull_inventory(admin_or_all) {
 
 				if (admin_or_all == "admin") $(".inner-inventory.admin").append(inventory_item);
 				else if (admin_or_all == "all") $(".inner-inventory.all").append(inventory_item);
+				else if (admin_or_all == "raffle") $(".inner-inventory.raffle").append(inventory_item);
 			});
 		}
 	});
@@ -112,8 +114,10 @@ function pull_inventory(admin_or_all) {
 $(".admin-inventory-select").click(function() {
 	$(".inner-inventory.all").removeClass('selected');
 	$(".inner-inventory.admin").addClass('selected');
+	$(".inner-inventory.raffle").removeClass('selected');
 
 	$(".all-inventory-select").removeClass('button-selected');
+	$(".raffle-inventory-select").removeClass('button-selected');
 	$(".admin-inventory-select").addClass('button-selected');
 
 	pull_inventory("admin");
@@ -122,11 +126,25 @@ $(".admin-inventory-select").click(function() {
 $(".all-inventory-select").click(function() {
 	$(".inner-inventory.admin").removeClass('selected');
 	$(".inner-inventory.all").addClass('selected');
+	$(".inner-inventory.raffle").removeClass('selected');
 
 	$(".admin-inventory-select").removeClass('button-selected');
+	$(".raffle-inventory-select").removeClass('button-selected');
 	$(".all-inventory-select").addClass('button-selected');
 
 	pull_inventory("all");
+});
+
+$(".raffle-inventory-select").click(function() {
+	$(".inner-inventory.admin").removeClass('selected');
+	$(".inner-inventory.all").removeClass('selected');
+	$(".inner-inventory.raffle").addClass('selected');
+
+	$(".admin-inventory-select").removeClass('button-selected');
+	$(".all-inventory-select").removeClass('button-selected');
+	$(".raffle-inventory-select").addClass('button-selected');
+
+	pull_inventory("raffle");
 });
 
 $(".icon-div").click(function() {
@@ -181,6 +199,7 @@ $(".close-inventory").click(() => {
 	$(".add-item-raffle").children("ion-icon").removeClass('open');
 	$(".add-item-inventory-popup").removeClass('open');
 	$(".add-item-raffle-popup").removeClass('open');
+	$(".inventory-adding").removeClass('open');
 	$(".inventory-popup").removeClass('open');
 
 	setTimeout(function() { // hide object fully
@@ -211,12 +230,17 @@ $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function
 
 		$.ajax({
 			type: "DELETE",
-			url: "/admin/inventory",
+			url: "/admin/inventory" + ($(this).hasClass("raffle") ? "/raffle" : ""),
 			data: {
-				id: this.id
+				id: this.id,
+				class: $(this).hasClass("raffle") ? "raffle" : ""
 			},
 			success: function(id) {
-				$("#" + id + "item").css("background", "#bd4881");
+				let id_split = id.split("||");
+				if (id_split[1] == "raffle")
+					$("#" + id_split[0] + "item" + id_split[1]).remove();
+				else
+					$("#" + id_split[0] + "item").css("background", "#bd4881");
 			}
 		});
 
@@ -233,9 +257,11 @@ function inventory_change() {
 	$(".add-item-raffle-popup").removeClass('open');
 	$(".add-item-raffle").children("ion-icon").removeClass('open');
 	if ($(".add-item-inventory-popup").hasClass('open')) {
-		$(".inventory-adding").removeClass('open');
 		$(".add-item-inventory").children("ion-icon").removeClass('open');
 		$(".add-item-inventory-popup").removeClass('open');
+		setTimeout(function() {
+			$(".inventory-adding").removeClass('open');
+		}, 600);
 	} else {
 		$(".inventory-adding").addClass('open');
 		$(".add-item-inventory").children("ion-icon").addClass('open');
@@ -249,9 +275,11 @@ function raffle_change() {
 	$(".add-item-inventory-popup").removeClass('open');
 	$(".add-item-inventory").children("ion-icon").removeClass('open');
 	if ($(".add-item-raffle-popup").hasClass('open')) {
-		$(".inventory-adding").removeClass('open');
 		$(".add-item-raffle").children("ion-icon").removeClass('open');
 		$(".add-item-raffle-popup").removeClass('open');
+		setTimeout(function() {
+			$(".inventory-adding").removeClass('open');
+		}, 600);
 	} else {
 		$(".inventory-adding").addClass('open');
 		$(".add-item-raffle").children("ion-icon").addClass('open');
@@ -277,6 +305,13 @@ $("#submit-add-inventory-item").click(function(event) {
 		},
 		success: function() {
 			popout_alert("Added to inventory!");
+			if ($(".inner-inventory.selected").hasClass('all'))
+					pull_inventory("all");
+				else if ($(".inner-inventory.selected").hasClass('admin'))
+					pull_inventory("admin");
+				else
+					pull_inventory("raffle");
+
 			inventory_change();
 		},
 		error: function(error) {
@@ -305,13 +340,20 @@ $("#submit-add-raffle-item").click(function(event) {
 				popout_alert(error);
 			} else {
 				popout_alert("Added to raffle!");
+				if ($(".inner-inventory.selected").hasClass('all'))
+					pull_inventory("all");
+				else if ($(".inner-inventory.selected").hasClass('admin'))
+					pull_inventory("admin");
+				else
+					pull_inventory("raffle");
+
 				raffle_change();
 			}
 		}
 	});
 });
 
-let real_click = 0;
+let real_click;
 let current_raffle_value;
 
 $(".raffle-settings").click(function() {
@@ -321,13 +363,12 @@ $(".raffle-settings").click(function() {
 		dataType: "text",
 		success: function(raffle_value) {
 
-			if (raffle_value == "true" || parseFloat(raffle_value, 10) == 1) {
-				real_click = 0;
-				if (raffle_value != current_raffle_value) {
-					$("#clicking-raffle-toggle").trigger('click');
-					current_raffle_value = raffle_value;
-				}
-			}
+			real_click = 0;
+
+			if ((raffle_value == "true" || parseFloat(raffle_value, 10) == 1) && !$("#checking-box").is(":checked"))
+				$("#clicking-raffle-toggle").trigger('click');
+			else if ((raffle_value == "false" || parseFloat(raffle_value, 10) == 1) && $("#checking-box").is(":checked"))
+				$("#clicking-raffle-toggle").trigger('click');
 
 			real_click = 1;
 			$(".raffle-settings-popup").addClass("open");
@@ -352,4 +393,16 @@ $("#clicking-raffle-toggle").click(function() {
 
 $(".close-raffle-settings").click(function() {
 	$(".raffle-settings-popup").removeClass("open");
+});
+
+$(".raffle-drawing").click(function() {
+
+	$.ajax({
+		type: "GET",
+		url: "/admin/raffle",
+		success: function(raffle) {
+
+			console.log(raffle);
+		}
+	})
 });

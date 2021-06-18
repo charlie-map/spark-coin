@@ -179,6 +179,31 @@ $(".icon-div").click(function() {
 					popout_alert("Success!");
 			});
 		});
+	} else if ($(this).hasClass('camper-information')) {
+		console.log("here", $(".camper-information-popup").hasClass('open'));
+		if ($(".camper-information-popup").hasClass('open')) {
+			$(".camper-information-popup").removeClass('open');
+			return;
+		}
+
+		$.ajax({
+			type: "GET",
+			url: "/admin/campers",
+			success: function(campers) {
+
+				$(".camper-information-body").empty();
+
+				camper.forEach(camper => {
+
+					let information_item = "<div id='" + camper.camper_id + "'>" +
+						"<div id='" + camper.camper_id + "' style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/125ddf1e-dcd9-44b3-acfa-96b83851d827)'" +
+						"class='spark-logo-inventory camper-info-image'></div>" +
+						"<div class='item-info'>#" + camper.camper_id + "&nbsp;&nbsp;&nbsp;" + 
+				});
+			}
+		});
+
+		$(".camper-information-popup").addClass('open');
 	}
 });
 
@@ -205,6 +230,10 @@ $(".close-inventory").click(() => {
 	setTimeout(function() { // hide object fully
 		$(".inventory-popup").hide();
 	}, 1000);
+});
+
+$(".close-camper-information").click(() => {
+	$(".camper-information-popup").removeClass('open');
 });
 
 $(".inner-inventory").on("click", ".purchase-item", function() {
@@ -415,7 +444,7 @@ function fill_winners(raffle_winners) {
 			"<div class='inventory-descript'>" + invent.description + "</div>" +
 			"</div>";
 
-			console.log(inventory_item);
+		console.log(inventory_item);
 
 		$(".raffle-drawing-winners").append(inventory_item);
 	});
@@ -433,3 +462,10 @@ $(".raffle-drawing").click(function() {
 		}
 	})
 });
+
+//                                            _          __  __ 
+//   ___ __ _ _ __ ___  _ __   ___ _ __   ___| |_ _   _ / _|/ _|
+//  / __/ _` | '_ ` _ \| '_ \ / _ \ '__| / __| __| | | | |_| |_ 
+// | (_| (_| | | | | | | |_) |  __/ |    \__ \ |_| |_| |  _|  _|
+//  \___\__,_|_| |_| |_| .__/ \___|_|    |___/\__|\__,_|_| |_|  
+//                     |_|

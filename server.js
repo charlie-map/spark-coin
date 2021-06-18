@@ -395,13 +395,13 @@ function sendTxUpdates(camper_id, role) {
 			// determine last login time affecting these alerts
 			let last_login;
 			if (!result || !result[0].last_login) last_login = new Date(0);
-			else last_login = new Date();
+			else last_login = result[0].last_login;
 			// determine transactions to report based on role
 			let query_string;
 			let query_params = [ last_login, camper_id, camper_id ];
 			if (role > 0) { // if they are a staffer / admin it's all tx's that are for their INVENTORY ITEMS as well as direct transfers (sender or receiver)
-				query_string = "SELECT * FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id WHERE tx_time > ? AND ( sender_id = ? OR receiver_id = ? OR inventory.camper_id = ? );"
-				query_params.push(role == 2 ? "NULL" : camper_id);
+				query_string = "SELECT * FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id WHERE tx_time > ? AND ( sender_id = ? OR receiver_id = ? OR inventory.camper_id " + (role == 2 ? " IS NULL);" : " = ?);");
+				if (role != 2) query_params.push(camper_id);
 			} else // campers are just direct transfers (sender or receiver)
 				query_string = "SELECT * FROM tx WHERE tx_time > ? AND ( sender_id = ? OR receiver_id = ? ) ORDER BY tx_time DESC;"
 			connection.query(query_string, query_params, (err, result) => {

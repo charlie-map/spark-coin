@@ -291,7 +291,7 @@ app.get("/admin/raffle", isLoggedIn(2), async (req, res, next) => {
 	try {
 		// get all raffle items
 		let raffle_items = await new Promise((resolve, reject) => {
-			connection.query("SELECT id, item_name, description FROM raffle_item WHERE active = 1;", (err, result) => {
+			connection.query("SELECT * FROM raffle_item WHERE active = 1;", (err, result) => {
 				if (err) reject(err);
 				resolve(result);
 			});

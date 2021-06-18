@@ -378,6 +378,45 @@ app.get("/logout", (req, res) => {
 
 /* ERROR HANDLING CHAIN */
 
+/*app.get("/txTest", isLoggedIn(), (req, res, next) => {
+	connection.query("SELECT tx_time, raffle_item, COALESCE(inventory.item_name, raffle_item.item_name) AS item_name, COALESCE(inventory.description, raffle_item.description) AS description, COALESCE(inventory.image_url, raffle_item.image_url) AS image_url, inventory.camper_id AS owner_id, COALESCE(OWN_S.camp_name, CONCAT(OWN.first_name, ' ', OWN.last_name)) AS owner, price, COALESCE(inventory.active, raffle_item.active) AS active, receiver_id, sender_id, COALESCE(REC_S.camp_name, CONCAT(REC.first_name, ' ', REC.last_name)) AS receiver_name, COALESCE(SEN_S.camp_name, CONCAT(SEN.first_name, ' ', SEN.last_name)) AS sender_name, amount, message FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id LEFT JOIN raffle_item ON tx.raffle_item = raffle_item.id LEFT JOIN registration.camper REC ON tx.receiver_id = REC.id LEFT JOIN registration.camper SEN ON tx.sender_id = SEN.id LEFT JOIN registration.camper OWN ON inventory.camper_id = OWN.id LEFT JOIN spark_user REC_S ON receiver_id = REC_S.camper_id LEFT JOIN spark_user SEN_S ON sender_id = SEN_S.camper_id LEFT JOIN spark_user OWN_S ON inventory.camper_id = OWN_S.camper_id" + (req.user.staffer != 2 ? " WHERE tx.sender_id = ? OR tx.receiver_id = ? OR inventory.camper_id = ?" : "") + " ORDER BY tx_time DESC;", [req.user.camper_id, req.user.camper_id, req.user.camper_id], (err, result) => {
+		if (err || !result) next(err);
+		// create filtered return object:
+		// transaction: { purchase: 0/1, tx_time
+		// <if purchase=0> received: 0/1, receiver_id, sender_id, receiver_name, sender_name, amount, message }
+		// <if purchase=1> raffle: 0/1, item_name, description, image_url, price, active, purchaser_id, purchaser_name, owner_id, owner_name }
+		// 		(if they're a staffer, show the purchaser name; if they're a camper, show the owner name)
+		result = result.map((tx) => {
+			let new_tx = {};
+			new_tx.tx_time = tx.tx_time;
+			if (!tx.receiver_id) {	// purchase/raffle
+				new_tx.purchase = 1;
+				new_tx.raffle = tx.raffle_item ? 1 : 0;
+				new_tx.item_name = tx.item_name;
+				new_tx.description = tx.description;
+				new_tx.image_url = tx.image_url;
+				new_tx.price = tx.raffle_item ? 1 : tx.price;
+				new_tx.active = tx.active;
+				new_tx.purchaser_id = tx.sender_id;
+				new_tx.purchaser_name = tx.sender_name;
+				new_tx.owner_id = tx.owner_id;
+				new_tx.owner_name = tx.owner;
+			} else {	// xfer
+				new_tx.purchase = 0;
+				new_tx.received = tx.receiver_id == req.user.camper_id;
+				new_tx.receiver_id = tx.receiver_id;
+				new_tx.sender_id = tx.sender_id;
+				new_tx.receiver_name = tx.receiver_name;
+				new_tx.sender_name = tx.sender_name;
+				new_tx.amount = tx.amount;
+				new_tx.message = tx.message;
+			}
+			return new_tx;	
+		});
+		res.json(result);
+	});
+});*/
+
 app.use(function(err, req, res, next) { // handle all other thrown errors
 	if (err.login) // handle login errors
 		res.render("initial", err.message ? {
@@ -437,15 +476,20 @@ io.on('connection', (socket) => {
 		if (socket.user) delete user_sockets[socket.user.camper_id];
 	});
 
+	// tx_get returns array of transaction objects according to "filtered return object" spec within
+	// if camper, this is all purchases and transfers involving the camper
+	// if staffer, this is all purchases and transfers involving the staffer PLUS purchases from THEIR inventory
+	// if admin, this is all transactions fully decorated with names as spec'd
 	socket.on('tx_get', (cb) => {
 		if (!socket.user) return cb("Not logged in.");
 		updateLogin(socket.user.camper_id).catch(() => {return;});
-		connection.query("SELECT tx_time, raffle_item, COALESCE(inventory.item_name, raffle_item.item_name) AS item_name, COALESCE(inventory.description, raffle_item.description) AS description, COALESCE(inventory.image_url, raffle_item.image_url) AS image_url, price, COALESCE(inventory.active, raffle_item.active) AS active, receiver_id, sender_id, COALESCE(REC_S.camp_name, REC.first_name) AS receiver_name, COALESCE(SEN_S.camp_name, SEN.first_name) AS sender_name, amount, message FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id LEFT JOIN raffle_item ON tx.raffle_item = raffle_item.id LEFT JOIN registration.camper REC ON tx.receiver_id = REC.id LEFT JOIN registration.camper SEN ON tx.sender_id = SEN.id LEFT JOIN spark_user REC_S ON receiver_id = REC_S.camper_id LEFT JOIN spark_user SEN_S ON sender_id = SEN_S.camper_id WHERE tx.sender_id = ? OR tx.receiver_id = ? ORDER BY tx_time DESC;", [socket.user.camper_id, socket.user.camper_id], (err, result) => {
+		connection.query("SELECT tx_time, raffle_item, COALESCE(inventory.item_name, raffle_item.item_name) AS item_name, COALESCE(inventory.description, raffle_item.description) AS description, COALESCE(inventory.image_url, raffle_item.image_url) AS image_url, inventory.camper_id AS owner_id, COALESCE(OWN_S.camp_name, CONCAT(OWN.first_name, ' ', OWN.last_name)) AS owner, price, COALESCE(inventory.active, raffle_item.active) AS active, receiver_id, sender_id, COALESCE(REC_S.camp_name, CONCAT(REC.first_name, ' ', REC.last_name)) AS receiver_name, COALESCE(SEN_S.camp_name, CONCAT(SEN.first_name, ' ', SEN.last_name)) AS sender_name, amount, message FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id LEFT JOIN raffle_item ON tx.raffle_item = raffle_item.id LEFT JOIN registration.camper REC ON tx.receiver_id = REC.id LEFT JOIN registration.camper SEN ON tx.sender_id = SEN.id LEFT JOIN registration.camper OWN ON inventory.camper_id = OWN.id LEFT JOIN spark_user REC_S ON receiver_id = REC_S.camper_id LEFT JOIN spark_user SEN_S ON sender_id = SEN_S.camper_id LEFT JOIN spark_user OWN_S ON inventory.camper_id = OWN_S.camper_id" + (socket.user.staffer != 2 ? " WHERE tx.sender_id = ? OR tx.receiver_id = ? OR inventory.camper_id = ?" : "") + " ORDER BY tx_time DESC;", [socket.user.camper_id, socket.user.camper_id, socket.user.camper_id], (err, result) => {
 			if (err || !result) cb([]);
 			// create filtered return object:
 			// transaction: { purchase: 0/1, tx_time
 			// <if purchase=0> received: 0/1, receiver_id, sender_id, receiver_name, sender_name, amount, message }
-			// <if purchase=1> raffle: 0/1, item_name, description, image_url, price, active }
+			// <if purchase=1> raffle: 0/1, item_name, description, image_url, price, active, purchaser_id, purchaser_name, owner_id, owner_name }
+			// 		(if they're a staffer, show the purchaser name; if they're a camper, show the owner name)
 			result = result.map((tx) => {
 				let new_tx = {};
 				new_tx.tx_time = tx.tx_time;
@@ -457,6 +501,10 @@ io.on('connection', (socket) => {
 					new_tx.image_url = tx.image_url;
 					new_tx.price = tx.raffle_item ? 1 : tx.price;
 					new_tx.active = tx.active;
+					new_tx.purchaser_id = tx.sender_id;
+					new_tx.purchaser_name = tx.sender_name;
+					new_tx.owner_id = tx.owner_id;
+					new_tx.owner_name = tx.owner;
 				} else {	// xfer
 					new_tx.purchase = 0;
 					new_tx.received = tx.receiver_id == socket.user.camper_id;
@@ -481,7 +529,7 @@ io.on('connection', (socket) => {
 		if (settings.raffle)
 			query_string = "SELECT id, item_name, description, image_url, 'RAFFLE' AS owner, 1 as price FROM raffle_item WHERE active = 1;";
 		else
-			query_string = "SELECT id, item_name, description, image_url, camp_name AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id WHERE active = 1 AND quantity > 0;"
+			query_string = "SELECT inventory.id, item_name, description, image_url, COALESCE(camp_name, CONCAT(registration.camper.first_name, ' ', registration.camper.last_name)) AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id LEFT JOIN registration.camper ON inventory.camper_id = registration.camper.id WHERE active = 1 AND quantity > 0;"
 		// filter out no quantity items & only active items
 		connection.query(query_string, (err, result) => {
 			if (err || !result) cb([]);

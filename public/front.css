@@ -796,6 +796,28 @@ input:invalid {
 	font-weight: 600;
 }
 
+.raffle-drawing-winners {
+	margin-top: 20px;
+	overflow-y: scroll;
+	height: calc(100% - 150px);
+}
+
+.raffle-drawing-winners > div {
+	margin: 20px;
+	padding: 1px;
+}
+
+.display-styling-inventory-raffle {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.item-winner > ion-icon {
+	vertical-align: middle;
+}
+
 @media only screen and (max-width: 500px), screen and (max-height: 700px) {
 	.send-item-popup {
 		position: absolute;

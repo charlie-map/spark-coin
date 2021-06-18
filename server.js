@@ -268,6 +268,14 @@ app.get("/admin/campers", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
+app.post("/admin/campers/upgrade", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.camper_id || !req.body.role || !(req.body.role > -1 && req.body.role < 3)) return next(new Error('Required field missing.'));
+	connection.query("UDPATE spark_user SET staffer = ? WHERE camper_id = ?;", [req.body.role, req.body.camper_id], (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
 app.get("/admin/raffle/value", isLoggedIn(2), (req, res, next) => {
 	res.end("" + settings.raffle);
 });

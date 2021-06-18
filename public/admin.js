@@ -306,11 +306,11 @@ $("#submit-add-inventory-item").click(function(event) {
 		success: function() {
 			popout_alert("Added to inventory!");
 			if ($(".inner-inventory.selected").hasClass('all'))
-					pull_inventory("all");
-				else if ($(".inner-inventory.selected").hasClass('admin'))
-					pull_inventory("admin");
-				else
-					pull_inventory("raffle");
+				pull_inventory("all");
+			else if ($(".inner-inventory.selected").hasClass('admin'))
+				pull_inventory("admin");
+			else
+				pull_inventory("raffle");
 
 			inventory_change();
 		},
@@ -395,14 +395,41 @@ $(".close-raffle-settings").click(function() {
 	$(".raffle-settings-popup").removeClass("open");
 });
 
+function fill_winners(raffle_winners) {
+
+	raffle_winners.forEach(invent => {
+
+		console.log(invent);
+
+		let inventory_item = "<div style='background: #00a8a8'>" +
+			"<div class='display-styling-inventory-raffle'>" +
+			"<div style='background-image: " + (invent.image_url ? "url(" + invent.image_url + ");'" : "url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'") +
+			"class='spark-logo-inventory remove-hover'></div>" +
+			"<div class='item-info'>" +
+			"<div style='display-inline;' class='item-name raffle-draw'>" + invent.item_name + "</div>" +
+			"<ion-icon name='chevron-forward-outline'></ion-icon>" +
+			"<div style='display: inline;' class='seller'>" + (invent.camper_id ? invent.camper_id : "❓❓❓") + "</div>" +
+			"</div>" +
+			"<div style='display: inline; padding: 10px' class='item-winner'>Winner<ion-icon name='chevron-forward-outline'></ion-icon>" + invent.winner_name + "(#" + invent.winner + ")" + "</div>" +
+			"</div>" +
+			"<div class='inventory-descript'>" + invent.description + "</div>" +
+			"</div>";
+
+			console.log(inventory_item);
+
+		$(".raffle-drawing-winners").append(inventory_item);
+	});
+}
+
 $(".raffle-drawing").click(function() {
 
 	$.ajax({
 		type: "GET",
 		url: "/admin/raffle",
 		success: function(raffle) {
+			$(".raffle-drawing-winners").empty();
 
-			console.log(raffle);
+			fill_winners(raffle);
 		}
 	})
 });

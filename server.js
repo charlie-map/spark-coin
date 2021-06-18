@@ -422,13 +422,12 @@ io.on('connection', (socket) => {
 		sess_store.get(sid, (err, data) => {
 			socket.user = data.user;
 			user_sockets[data.user.camper_id] = socket;
+			// upon initial socket connection, deliver tx updates from before last socket pulse
+			sendTxUpdates(socket.user.camper_id, socket.user.staffer).then((result) => {
+				socket.emit('tx_update', result);
+				updateLogin(socket.user.camper_id).catch((err) => { console.error(err); return; });
+			}).catch((err) => { console.error(err); return; });
 		});
-
-	// upon initial socket connection, deliver tx updates from before last socket pulse
-	sendTxUpdates(socket.user.camper_id, socket.user.staffer).then((result) => {
-		socket.emit('tx_update', result);
-		updateLogin(socket.user.camper_id).catch((err) => { console.error(err); return; });
-	}).catch((err) => { console.error(err); return; });
 
 	socket.on('disconnect', () => {
 		if (socket.user) delete user_sockets[socket.user.camper_id];

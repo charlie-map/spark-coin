@@ -370,10 +370,6 @@ app.get("/logout", (req, res) => {
 
 /* ERROR HANDLING CHAIN */
 
-app.get("/txTest", isLoggedIn(), (req, res, next) => {
-	sendTxUpdates(req.user.camper_id).then((result) => { res.json(result); } ).catch((err) => { next(err); });
-});
-
 app.use(function(err, req, res, next) { // handle all other thrown errors
 	if (err.login) // handle login errors
 		res.render("initial", err.message ? {
@@ -436,8 +432,35 @@ io.on('connection', (socket) => {
 	socket.on('tx_get', (cb) => {
 		if (!socket.user) return cb("Not logged in.");
 		updateLogin(socket.user.camper_id).catch(() => {return;});
-		connction.query("SELECT * FROM tx WHERE sending_id = ? OR receiving_id = ? ORDER BY tx_time DESC;", [socket.user.camper_id, socket.user.camper_id], (err, result) => {
+		connection.query("SELECT tx_time, raffle_item, COALESCE(inventory.item_name, raffle_item.item_name) AS item_name, COALESCE(inventory.description, raffle_item.description) AS description, COALESCE(inventory.image_url, raffle_item.image_url) AS image_url, price, COALESCE(inventory.active, raffle_item.active) AS active, receiver_id, sender_id, COALESCE(REC_S.camp_name, REC.first_name) AS receiver_name, COALESCE(SEN_S.camp_name, SEN.first_name) AS sender_name, amount, message FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id LEFT JOIN raffle_item ON tx.raffle_item = raffle_item.id LEFT JOIN registration.camper REC ON tx.receiver_id = REC.id LEFT JOIN registration.camper SEN ON tx.sender_id = SEN.id LEFT JOIN spark_user REC_S ON receiver_id = REC_S.camper_id LEFT JOIN spark_user SEN_S ON sender_id = SEN_S.camper_id WHERE tx.sender_id = ? OR tx.receiver_id = ? ORDER BY tx_time DESC;", [socket.user.camper_id, socket.user.camper_id], (err, result) => {
 			if (err || !result) cb([]);
+			// create filtered return object:
+			// transaction: { purchase: 0/1, tx_time
+			// <if purchase=0> received: 0/1, receiver_id, sender_id, receiver_name, sender_name, amount, message }
+			// <if purchase=1> raffle: 0/1, item_name, description, image_url, price, active }
+			result = result.map((tx) => {
+				let new_tx = {};
+				new_tx.tx_time = tx.tx_time;
+				if (!tx.receiver_id) {	// purchase/raffle
+					new_tx.purchase = 1;
+					new_tx.raffle = tx.raffle_item ? 1 : 0;
+					new_tx.item_name = tx.item_name;
+					new_tx.description = tx.description;
+					new_tx.image_url = tx.image_url;
+					new_tx.price = tx.raffle_item ? 1 : tx.price;
+					new_tx.active = tx.active;
+				} else {	// xfer
+					new_tx.purchase = 0;
+					new_tx.received = tx.receiver_id == socket.user.camper_id;
+					new_tx.receiver_id = tx.receiver_id;
+					new_tx.sender_id = tx.sender_id;
+					new_tx.receiver_name = tx.receiver_name;
+					new_tx.sender_name = tx.sender_name;
+					new_tx.amount = tx.amount;
+					new_tx.message = tx.message;
+				}
+				return new_tx;	
+			});
 			cb(result);
 		});
 	});

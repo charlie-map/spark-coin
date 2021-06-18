@@ -99,11 +99,7 @@ function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 			next(new LoginError("You aren't allowed to do that!"));
 		else {
 			req.user = req.session.user;
-			updateLogin(req.user.camper_id).then(() => {
-				next();
-			}, (err) => {
-				next(new LoginError(err));
-			});
+			next();
 		}
 	};
 }
@@ -374,6 +370,10 @@ app.get("/logout", (req, res) => {
 
 /* ERROR HANDLING CHAIN */
 
+app.get("/txTest", isLoggedIn(), (req, res, next) => {
+	sendTxUpdates(req.user.camper_id).then((result) => { res.json(result); } ).catch((err) => { next(err); });
+});
+
 app.use(function(err, req, res, next) { // handle all other thrown errors
 	if (err.login) // handle login errors
 		res.render("initial", err.message ? {
@@ -388,6 +388,30 @@ app.use(function(err, req, res, next) { // handle all other thrown errors
 
 /* LISTENERS */
 
+function sendTxUpdates(camper_id, role) {
+	return new Promise((resolve, reject) => {
+		connection.query("SELECT last_login FROM spark_user WHERE camper_id = ?;", [camper_id], (err, result) => {
+			if (err) reject(err);
+			// determine last login time affecting these alerts
+			let last_login;
+			if (!result || !result[0].last_login) last_login = new Date(0);
+			else last_login = new Date();
+			// determine transactions to report based on role
+			let query_string;
+			let query_params = [ last_login, camper_id, camper_id ];
+			if (role > 0) { // if they are a staffer / admin it's all tx's that are for their INVENTORY ITEMS as well as direct transfers (sender or receiver)
+				query_string = "SELECT * FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id WHERE tx_time > ? AND ( sender_id = ? OR receiver_id = ? OR inventory.camper_id = ? );"
+				query_params.push(role == 2 ? "NULL" : camper_id);
+			} else // campers are just direct transfers (sender or receiver)
+				query_string = "SELECT * FROM tx WHERE tx_time > ? AND ( sender_id = ? OR receiver_id = ? ) ORDER BY tx_time DESC;"
+			connection.query(query_string, query_params, (err, result) => {
+				if (err) reject(err);
+				resolve(result);
+			});
+		});
+	});
+}
+
 io.on('connection', (socket) => {
 	// parse cookie to associate user with this session
 	let sid = decodeURIComponent(socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid=')).split('=')[1]);
@@ -399,6 +423,16 @@ io.on('connection', (socket) => {
 			socket.user = data.user;
 			user_sockets[data.user.camper_id] = socket;
 		});
+
+	// upon initial socket connection, deliver tx updates from before last socket pulse
+	sendTxUpdates(socket.user.camper_id, socket.user.staffer).then((result) => {
+		socket.emit('tx_update', result);
+		updateLogin(socket.user.camper_id).catch((err) => { console.error(err); return; });
+	}).catch((err) => { console.error(err); return; });
+
+	socket.on('disconnect', () => {
+		if (socket.user) delete user_sockets[socket.user.camper_id];
+	});
 
 	socket.on('tx_get', (cb) => {
 		if (!socket.user) return cb("Not logged in.");
@@ -427,6 +461,7 @@ io.on('connection', (socket) => {
 
 	socket.on('purchase', async (item_id, cb) => {
 		if (!socket.user || socket.user.staffer != 0) return cb("Not logged in / not correct role.");
+		updateLogin(socket.user.camper_id).catch(() => {return;});
 		try {
 			// get data about inventory item & verify quantity / active
 			let item = await new Promise((resolve, reject) => {
@@ -494,11 +529,17 @@ io.on('connection', (socket) => {
 			if (!item.camper_id) { // camp-wide alert for camp-wide item
 				// loop through users and find all admins
 				let admin_slack_ids = await new Promise((resolve, reject) => {
-					connection.query("SELECT slack_id FROM spark_user WHERE staffer > 1;", (err, result) => {
+					connection.query("SELECT camper_id, slack_id FROM spark_user WHERE staffer > 1;", (err, result) => {
 						if (err || !result)
 							resolve(null)
 						resolve(result);
 					});
+				});
+				admin_slack_ids.forEach((admin) => {
+					if (user_sockets[admin.camper_id]) {
+						user_sockets[admin.camper_id].emit('alert', message);
+						updateLogin(admin.camper_id).catch(() => {return;});
+					}
 				});
 				await Promise.all(admin_slack_ids.map((slack_id) => {
 					axios.post('https://slack.com/api/chat.postMessage', {
@@ -513,7 +554,10 @@ io.on('connection', (socket) => {
 				}));
 				return cb(false);
 			} else { // specific alert for staffer
-				if (user_sockets[item.camper_id]) user_sockets[item.camper_id].emit('alert', message);
+				if (user_sockets[item.camper_id]) {
+					user_sockets[item.camper_id].emit('alert', message);
+					updateLogin(item.camper_id).catch(() => {return;});
+				}
 				// look up staffer's slack ID & message them
 				let slack_id = await new Promise((resolve, reject) => {
 					connection.query("SELECT slack_id FROM spark_user WHERE camper_id = ?;", [item.camper_id], (err, result) => {
@@ -542,6 +586,7 @@ io.on('connection', (socket) => {
 
 	socket.on('transfer', async (receiving_id, amount, message, cb) => {
 		if (!socket.user) return cb("Not logged in.");
+		updateLogin(socket.user.camper_id).catch(() => {return;});
 		amount = parseFloat(amount);
 		if (amount == "NaN") return cb("Not a valid amount.");
 		amount = roundTo(amount, 3);
@@ -581,7 +626,10 @@ io.on('connection', (socket) => {
 
 			// notify receiving and sending sockets of balance change
 			socket.emit('balance', sending_bal == Infinity ? '∞' : sending_bal, -1);
-			if (user_sockets[receiving_id]) user_sockets[receiving_id].emit('balance', receiving_bal, 1);
+			if (user_sockets[receiving_id]) {
+				user_sockets[receiving_id].emit('balance', receiving_bal, 1);
+				updateLogin(receiving_id).catch((err) => { return; });	// if they received it then they don't get a notif later
+			}
 			return cb(null);
 		} catch (err) {
 			return cb(err);

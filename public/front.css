@@ -663,7 +663,7 @@ input:invalid {
 
 .raffle-status {
 	width: 100%;
-	height: auto;
+	height: calc(100% - 70px);
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
@@ -673,13 +673,13 @@ input:invalid {
 .raffle-status h2 {
 	position: relative;
 	margin: 0;
-	top: -120px;
+	top: calc(-30% - 5%);;
 	left: 200px;
 }
 
 #test-slider {
 	position: relative;
-	top: -120px;
+	top: calc(-30% - 5%);
 	width: 600px;
 	height: 350px;
 	margin: 0;

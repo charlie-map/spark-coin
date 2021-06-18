@@ -312,6 +312,7 @@ $("#submit-add-raffle-item").click(function(event) {
 });
 
 let real_click = 0;
+let current_raffle_value;
 
 $(".raffle-settings").click(function() {
 	$.ajax({
@@ -321,7 +322,11 @@ $(".raffle-settings").click(function() {
 		success: function(raffle_value) {
 
 			if (raffle_value == "true" || parseFloat(raffle_value, 10) == 1) {
-				$("#clicking-raffle-toggle").trigger('click');
+				real_click = 0;
+				if (raffle_value != current_raffle_value) {
+					$("#clicking-raffle-toggle").trigger('click');
+					current_raffle_value = raffle_value;
+				}
 			}
 
 			real_click = 1;
@@ -347,5 +352,4 @@ $("#clicking-raffle-toggle").click(function() {
 
 $(".close-raffle-settings").click(function() {
 	$(".raffle-settings-popup").removeClass("open");
-	real_click = 0;
 });

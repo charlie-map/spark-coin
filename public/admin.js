@@ -86,10 +86,10 @@ function pull_inventory(admin_or_all) {
 
 			all_inventory.forEach(invent => {
 
-				let inventory_item = "<div id='" + invent.id + "item' class='" + (invent.active == 0 ? "non-active" : "") + "'>" +
+				let inventory_item = "<div id='" + invent.id + "item" + (admin_or_all == "raffle" ? "raffle" : "") + "' class='" + (invent.active == 0 ? "non-active" : "") + "'>" +
 					"<div class='display-styling-inventory'>" +
 					"<div id='" + invent.id + "' style='background-image: " + (invent.image_url ? "url(" + invent.image_url + ");'" : "url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'") +
-					"class='spark-logo-inventory remove-hover'></div>" +
+					"class='spark-logo-inventory remove-hover " + admin_or_all + "'></div>" +
 					"<div class='item-info'>" +
 					"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
 					"<ion-icon name='chevron-forward-outline'></ion-icon>" +
@@ -103,7 +103,6 @@ function pull_inventory(admin_or_all) {
 					"<div class='inventory-descript'>" + invent.description + "</div>" +
 					"</div>";
 
-				if (admin_or_all == "raffle") console.log(invent);
 				if (admin_or_all == "admin") $(".inner-inventory.admin").append(inventory_item);
 				else if (admin_or_all == "all") $(".inner-inventory.all").append(inventory_item);
 				else if (admin_or_all == "raffle") $(".inner-inventory.raffle").append(inventory_item);
@@ -231,12 +230,17 @@ $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function
 
 		$.ajax({
 			type: "DELETE",
-			url: "/admin/inventory",
+			url: "/admin/inventory" + ($(this).hasClass("raffle") ? "/raffle" : ""),
 			data: {
-				id: this.id
+				id: this.id,
+				class: $(this).hasClass("raffle") ? "raffle" : ""
 			},
 			success: function(id) {
-				$("#" + id + "item").css("background", "#bd4881");
+				let id_split = id.split("||");
+				if (id_split[1] == "raffle")
+					$("#" + id_split[0] + "item" + id_split[1]).remove();
+				else
+					$("#" + id_split[0] + "item").css("background", "#bd4881");
 			}
 		});
 

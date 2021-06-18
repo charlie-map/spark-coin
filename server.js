@@ -262,7 +262,7 @@ app.post("/admin/reset", isLoggedIn(2), (req, res, next) => {
 });
 
 app.get("/admin/campers", isLoggedIn(2), (req, res, next) => {
-	connection.query("SELECT * FROM spark_user;", (err, result) => {
+	connection.query("SELECT spark_user.*, CONCAT(registration.camper.first_name, ' ', registration.camper.last_name) AS name FROM spark_user LEFT JOIN registration.camper ON spark_user.camper_id = registration.camper.id;", (err, result) => {
 		if (err) return next(err);
 		res.json(result);
 	});

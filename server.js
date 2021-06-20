@@ -291,7 +291,7 @@ app.post("/admin/campers/upgrade/pump", isLoggedIn(2), (req, res, next) => {
 });
 
 app.post("/admin/campers/campname", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.camper_id || !req.body.role || !(req.body.role == 1 || req.body.role == -1)) return next(new Error('Required field missing.'));
+	if (!req.body.camper_id || !req.body.camp_name) return next(new Error('Required field missing.'));
 	connection.query("UPDATE spark_user SET camp_name = ? WHERE camper_id = ?;", [req.body.camper_id, req.body.camp_name], (err) => {
 		if (err) return next(err);
 		res.end();

@@ -193,12 +193,23 @@ $(".icon-div").click(function() {
 
 				$(".camper-information-body").empty();
 
-				camper.forEach(camper => {
+				campers.forEach(camper => {
 
-					let information_item = "<div id='" + camper.camper_id + "'>" +
+					let information_item = "<div id='" + camper.camper_id + "camper-information-page'>" +
+						"<div class='upperware-camper-information'>" +
 						"<div id='" + camper.camper_id + "' style='background-image: url(https://overfload.nyc3.cdn.digitaloceanspaces.com/125ddf1e-dcd9-44b3-acfa-96b83851d827)'" +
 						"class='spark-logo-inventory camper-info-image'></div>" +
-						"<div class='item-info'>#" + camper.camper_id + "&nbsp;&nbsp;&nbsp;" + 
+						"<div class='item-info'>#" + camper.camper_id + "&nbsp;&nbsp;&nbsp;" + camper.name + "</div>" +
+						"<div class='open-more-camper-information'><ion-icon class='icon-objects open-more-camper-information' name='chevron-forward-outline'></ion-icon></div>" +
+						"</div>" +
+						"<div class='drop-down-camper-information'>" +
+						"<div>Pin&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p class='camper-pin-number'>" + camper.pin + "</p>&nbsp;<ion-icon class='icon-objects reset-camper-pin' style='transform: scale(1);' name='sync-outline'></ion-icon></div>" + // pin
+						"<div>Balance&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.balance + "</div>" + // balance
+						"<div>Camp Name&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p class='camper-camp-name'>" + (camper.camp_name ? camper.camp_name : "❓❓❓") + "</p>&nbsp;<ion-icon class='icon-objects edit-camper-name' style='transform: scale(1);' name='terminal-outline'></ion-icon></div>" + // camp name
+						"<div>Staffer Level&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.staffer + "</div>" + // staff level
+						"</div></div>";
+
+					$(".camper-information-body").append(information_item);
 				});
 			}
 		});
@@ -342,6 +353,12 @@ $("#submit-add-inventory-item").click(function(event) {
 				pull_inventory("raffle");
 
 			inventory_change();
+
+			$("#item_name_value1").val("");
+			$("#price_value1").val("");
+			$("#quantity_value1").val("");
+			$("#item_description1").val("");
+			$("#item_image1").val("");
 		},
 		error: function(error) {
 			console.log(error.responseText);
@@ -377,6 +394,12 @@ $("#submit-add-raffle-item").click(function(event) {
 					pull_inventory("raffle");
 
 				raffle_change();
+
+				$("#item_name_value2").val("");
+				$("#price_value2").val("");
+				$("#quantity_value2").val("");
+				$("#item_description2").val("");
+				$("#item_image2").val("");
 			}
 		}
 	});
@@ -469,3 +492,54 @@ $(".raffle-drawing").click(function() {
 // | (_| (_| | | | | | | |_) |  __/ |    \__ \ |_| |_| |  _|  _|
 //  \___\__,_|_| |_| |_| .__/ \___|_|    |___/\__|\__,_|_| |_|  
 //                     |_|
+
+$(".camper-information-popup").on("click", "ion-icon.open-more-camper-information", function() {
+
+	if ($(this).parent().hasClass('open')) {
+		$(this).parent().removeClass('open');
+		$(this).parent().parent().siblings().removeClass('open');
+	} else {
+		$(this).parent().addClass('open');
+		$(this).parent().parent().siblings().addClass('open');
+	}
+});
+
+function stop_animation(unroller) {
+
+	$(unroller).parent().find(".reset-camper-pin").removeClass('open');
+}
+
+$(".camper-information-popup").on("click", "ion-icon.reset-camper-pin", function() {
+	let camper_id = $(this).parent().parent().parent().attr('id').replace(/[^0-9]/g, "");
+	$(this).parent().find(".reset-camper-pin").addClass('open');
+
+	setTimeout(stop_animation, 1000, this);
+
+	$.ajax({
+		type: "POST",
+		url: "/admin/reset",
+
+		data: {
+			camper_id
+		},
+		success: function(new_pin) {
+
+			$("#" + camper_id + "camper-information-page").find(".camper-pin-number").text(new_pin);
+		}
+	})
+});
+
+$(".camper-information-popup").on("click", "ion-icon.edit-camper-name", function() {
+
+	let camper_id = $(this).parent().parent().parent().attr('id').replace(/[^0-9]/g, "");
+
+	let camper_name = $(this).parent().parent().parent().children('.upperware-camper-information').children('.item-info').text().substring(3 + parseInt(camper_id, 10));
+	console.log(camper_id, camper_name);
+
+	$(".edit-camper-name-information-popup").children("h1").text("Edit Camp Name for " + camper_name);
+	$(".edit-camper-name-information-popup").addClass('open');
+});
+
+$("#close-edit-camp-name-popup").click(function() {
+	$(".edit-camper-name-information-popup").removeClass('open');
+});

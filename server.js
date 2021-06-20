@@ -276,6 +276,36 @@ app.post("/admin/campers/upgrade", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
+app.post("/admin/campers/upgrade/pump", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.camper_id || !req.body.role || !(req.body.role == 1 || req.body.role == -1)) return next(new Error('Required field missing.'));
+	// check valid
+	connection.query("SELECT staffer FROM spark_user WHERE camper_id = ?;", [req.body.camper_id], (err, result) => {
+		if (err || !result) return next(err);
+		let new_role = result[0].staffer + req.body.role;
+		if (new_role < 0 || new_role > 2) return next(new Error('Cannot pump camper that way.'));
+		connection.query("UDPATE spark_user SET staffer = ? WHERE camper_id = ?;", [new_role, req.body.role], (err) => {
+			if (err) return next(err);
+			res.end();
+		});
+	});
+});
+
+app.post("/admin/campers/campname", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.camper_id || !req.body.role || !(req.body.role == 1 || req.body.role == -1)) return next(new Error('Required field missing.'));
+	connection.query("UPDATE spark_user SET camp_name = ? WHERE camper_id = ?;", [req.body.camper_id, req.body.camp_name], (err) => {
+		if (err) return next(err);
+		res.end();
+	});
+});
+
+app.get("admin/campers/campname", isLoggedIn(2), (req, res, next) => {
+	if (!req.body.camper_id) return next(new Error('Required field missing.'));
+	connection.query("SELECT camp_name FROM spark_user WHERE camper_id = ?;", [req.body.camper_id], (err, result) => {
+		if (err || !result) return next(err);
+		res.end(result[0].camp_name);
+	});
+})
+
 app.get("/admin/raffle/value", isLoggedIn(2), (req, res, next) => {
 	res.end("" + settings.raffle);
 });

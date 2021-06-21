@@ -292,7 +292,7 @@ app.post("/admin/campers/upgrade/pump", isLoggedIn(2), (req, res, next) => {
 
 app.post("/admin/campers/campname", isLoggedIn(2), (req, res, next) => {
 	if (!req.body.camper_id || !req.body.camp_name) return next(new Error('Required field missing.'));
-	connection.query("UPDATE spark_user SET camp_name = ? WHERE camper_id = ?;", [req.body.camper_id, req.body.camp_name], (err) => {
+	connection.query("UPDATE spark_user SET camp_name = ? WHERE camper_id = ?;", [req.body.camp_name, req.body.camper_id], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
@@ -487,6 +487,8 @@ function sendTxUpdates(camper_id, role) {
 
 io.on('connection', (socket) => {
 	// parse cookie to associate user with this session
+	if (!socket.client.conn.request.headers.cookie || !socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid='))
+		socket.disconnect();
 	let sid = decodeURIComponent(socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid=')).split('=')[1]);
 	sid = signature.unsign(sid.substring(2), sess_secret);
 	if (!sid)

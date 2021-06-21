@@ -205,7 +205,7 @@ $(".icon-div").click(function() {
 						"<div class='drop-down-camper-information'>" +
 						"<div>Pin&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p class='camper-pin-number'>" + camper.pin + "</p>&nbsp;<ion-icon class='icon-objects reset-camper-pin' style='transform: scale(1);' name='sync-outline'></ion-icon></div>" + // pin
 						"<div>Balance&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.balance + "</div>" + // balance
-						"<div>Camp Name&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p class='camper-camp-name'>" + (camper.camp_name ? camper.camp_name : "❓❓❓") + "</p>&nbsp;<ion-icon class='icon-objects edit-camper-name' style='transform: scale(1);' name='terminal-outline'></ion-icon></div>" + // camp name
+						"<div>Camp Name&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p id='" + camper.camper_id + "camper-camp-name'>" + (camper.camp_name ? camper.camp_name : "❓❓❓") + "</p>&nbsp;<ion-icon class='icon-objects edit-camper-name' style='transform: scale(1);' name='terminal-outline'></ion-icon></div>" + // camp name
 						"<div>Staffer Level&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.staffer + "</div>" + // staff level
 						"</div></div>";
 
@@ -536,8 +536,39 @@ $(".camper-information-popup").on("click", "ion-icon.edit-camper-name", function
 	let camper_name = $(this).parent().parent().parent().children('.upperware-camper-information').children('.item-info').text().substring(3 + parseInt(camper_id, 10));
 	console.log(camper_id, camper_name);
 
-	$(".edit-camper-name-information-popup").children("h1").text("Edit Camp Name for " + camper_name);
+	$(".edit-camper-name-information-popup").children("h1").text("Edit Camp Name for #" + camper_id + " " + camper_name);
 	$(".edit-camper-name-information-popup").addClass('open');
+});
+
+$("#submit-new-camp-name").click(function(event) {
+	event.preventDefault();
+
+	let full_text = $(".edit-camper-name-information-popup").children("h1").text();
+	let camper_id = full_text.split("#")[1].split(" ")[0];
+
+	$.ajax({
+		method: "POST",
+		url: "/admin/campers/campname",
+		data: {
+			camper_id: camper_id,
+			camp_name: $("#camp-name-change").val()
+		},
+
+		success: function(error) {
+
+			if (error)
+				popout_alert(error);
+			else {
+
+				$("#" + camper_id + "camper-camp-name").text($("#camp-name-change").val());
+				$("#camper-name-change").val("");
+
+				popout_alert("Changed camp name!");
+
+				$(".edit-camper-name-information-popup").removeClass('open');
+			}
+		}
+	})
 });
 
 $("#close-edit-camp-name-popup").click(function() {

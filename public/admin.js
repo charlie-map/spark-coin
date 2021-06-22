@@ -93,7 +93,7 @@ function pull_inventory(admin_or_all) {
 					"<div class='item-info'>" +
 					"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
 					"<ion-icon name='chevron-forward-outline'></ion-icon>" +
-					"<div style='display: inline;' class='seller'>" + (invent.camper_id ? invent.camper_id : "❓❓❓") + "</div>" +
+					"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "❓❓❓") + "</div>" +
 					"</div>" +
 					"<button id='" + invent.id + "' class='purchase-item'>" +
 					"<span class='lightning-bolt-button'>⚡</span>" +
@@ -206,7 +206,7 @@ $(".icon-div").click(function() {
 						"<div>Pin&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p class='camper-pin-number'>" + camper.pin + "</p>&nbsp;<ion-icon class='icon-objects reset-camper-pin' style='transform: scale(1);' name='sync-outline'></ion-icon></div>" + // pin
 						"<div>Balance&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.balance + "</div>" + // balance
 						"<div>Camp Name&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p id='" + camper.camper_id + "camper-camp-name'>" + (camper.camp_name ? camper.camp_name : "❓❓❓") + "</p>&nbsp;<ion-icon class='icon-objects edit-camper-name' style='transform: scale(1);' name='terminal-outline'></ion-icon></div>" + // camp name
-						"<div>Staffer Level&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.staffer + "</div>" + // staff level
+						"<div>Staffer Level&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.staffer + "<div class='staffer-level-pump'><ion-icon style='transform: scale(0.8);' class='icon-objects' name='add-outline'></ion-icon><ion-icon style='transform: scale(0.8);' class='icon-objects' name='remove-outline'></ion-icon></div>" + // staff level
 						"</div></div>";
 
 					$(".camper-information-body").append(information_item);
@@ -451,8 +451,6 @@ function fill_winners(raffle_winners) {
 
 	raffle_winners.forEach(invent => {
 
-		console.log(invent);
-
 		let inventory_item = "<div style='background: #00a8a8'>" +
 			"<div class='display-styling-inventory-raffle'>" +
 			"<div style='background-image: " + (invent.image_url ? "url(" + invent.image_url + ");'" : "url(https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d);'") +
@@ -466,8 +464,6 @@ function fill_winners(raffle_winners) {
 			"</div>" +
 			"<div class='inventory-descript'>" + invent.description + "</div>" +
 			"</div>";
-
-		console.log(inventory_item);
 
 		$(".raffle-drawing-winners").append(inventory_item);
 	});

@@ -279,11 +279,12 @@ app.post("/admin/campers/upgrade", isLoggedIn(2), (req, res, next) => {
 app.post("/admin/campers/upgrade/pump", isLoggedIn(2), (req, res, next) => {
 	if (!req.body.camper_id || !req.body.role || !(req.body.role == 1 || req.body.role == -1)) return next(new Error('Required field missing.'));
 	// check valid
+	req.body.camper_id = parseInt(req.body.camper_id, 10);
 	connection.query("SELECT staffer FROM spark_user WHERE camper_id = ?;", [req.body.camper_id], (err, result) => {
 		if (err || !result) return next(err);
 		let new_role = result[0].staffer + parseInt(req.body.role, 10);
 		if (new_role < 0 || new_role > 2) return next(new Error('Cannot pump camper that way.'));
-		connection.query("UPDATE spark_user SET staffer = ? WHERE camper_id = ?;", [new_role, parseInt(req.body.role, 10)], (err) => {
+		connection.query("UPDATE spark_user SET staffer = ? WHERE camper_id = ?;", [new_role, req.body.camper_id], (err) => {
 			if (err) return next(err);
 			res.end();
 		});

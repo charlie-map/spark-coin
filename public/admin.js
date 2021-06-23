@@ -206,7 +206,7 @@ $(".icon-div").click(function() {
 						"<div>Pin&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p class='camper-pin-number'>" + camper.pin + "</p>&nbsp;<ion-icon class='icon-objects reset-camper-pin' style='transform: scale(1);' name='sync-outline'></ion-icon></div>" + // pin
 						"<div>Balance&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.balance + "</div>" + // balance
 						"<div>Camp Name&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p id='" + camper.camper_id + "camper-camp-name'>" + (camper.camp_name ? camper.camp_name : "❓❓❓") + "</p>&nbsp;<ion-icon class='icon-objects edit-camper-name' style='transform: scale(1);' name='terminal-outline'></ion-icon></div>" + // camp name
-						"<div>Staffer Level&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;" + camper.staffer + "<div class='staffer-level-pump'><ion-icon style='transform: scale(0.8);' class='icon-objects' name='add-outline'></ion-icon><ion-icon style='transform: scale(0.8);' class='icon-objects' name='remove-outline'></ion-icon></div>" + // staff level
+						"<div>Staffer Level&nbsp;<ion-icon style='transform: rotate(-135deg)' name='pencil-outline'></ion-icon>&nbsp;<p class='staffer-level-selector'>" + camper.staffer + "</p><div class='staffer-level-pump'><ion-icon style='transform: scale(0.8);' class='icon-objects pump pump-up' name='add-outline'></ion-icon><ion-icon style='transform: scale(0.8);' class='icon-objects pump pump-down' name='remove-outline'></ion-icon></div>" + // staff level
 						"</div></div>";
 
 					$(".camper-information-body").append(information_item);
@@ -569,4 +569,41 @@ $("#submit-new-camp-name").click(function(event) {
 
 $("#close-edit-camp-name-popup").click(function() {
 	$(".edit-camper-name-information-popup").removeClass('open');
+});
+
+$(".camper-information-body").on('click', '.icon-objects.pump', function() {
+	let camper_id = $(this).parent().parent().parent().parent().attr('id').replace(/[^0-9]/g, "");
+	if ($(this).hasClass('pump-up')) {
+		$.ajax({
+			method: "POST",
+			url: "/admin/campers/upgrade/pump",
+			data: {
+				camper_id: camper_id,
+				role: 1
+			},
+			success: function() {
+				$("#" + camper_id + "camper-information-page").find(".staffer-level-selector").text(parseInt($("#" + camper_id + "camper-information-page").find(".staffer-level-selector").text(), 10) + 1);
+				popout_alert("Successfully pumped camper!");
+			},
+			error: function(error) {
+				popout_alert(error.responseText.trim());
+			}
+		});
+	} else if ($(this).hasClass('pump-down')) {
+		$.ajax({
+			method: "POST",
+			url: "/admin/campers/upgrade/pump",
+			data: {
+				camper_id: camper_id,
+				role: -1
+			},
+			success: function() {
+				$("#" + camper_id + "camper-information-page").find(".staffer-level-selector").text(parseInt($("#" + camper_id + "camper-information-page").find(".staffer-level-selector").text(), 10) - 1);
+				popout_alert("Successfully pumped down camper!");
+			},
+			error: function(error) {
+				popout_alert(error.responseText.trim());
+			}
+		});
+	}
 });

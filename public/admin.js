@@ -607,3 +607,14 @@ $(".camper-information-body").on('click', '.icon-objects.pump', function() {
 		});
 	}
 });
+
+// logs
+
+$(".watch-logs").click(function() {
+
+	$(".log-popup").addClass("open");
+});
+
+$(".close-logs").click(function() {
+	$(".log-popup").removeClass("open");
+});

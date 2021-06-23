@@ -409,7 +409,7 @@ app.get("/logout", (req, res) => {
 
 /* ERROR HANDLING CHAIN */
 
-/*app.get("/txTest", isLoggedIn(), (req, res, next) => {
+app.get("/txTest", isLoggedIn(2), (req, res, next) => {
 	connection.query("SELECT tx_time, raffle_item, COALESCE(inventory.item_name, raffle_item.item_name) AS item_name, COALESCE(inventory.description, raffle_item.description) AS description, COALESCE(inventory.image_url, raffle_item.image_url) AS image_url, inventory.camper_id AS owner_id, COALESCE(OWN_S.camp_name, CONCAT(OWN.first_name, ' ', OWN.last_name)) AS owner, price, COALESCE(inventory.active, raffle_item.active) AS active, receiver_id, sender_id, COALESCE(REC_S.camp_name, CONCAT(REC.first_name, ' ', REC.last_name)) AS receiver_name, COALESCE(SEN_S.camp_name, CONCAT(SEN.first_name, ' ', SEN.last_name)) AS sender_name, amount, message FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id LEFT JOIN raffle_item ON tx.raffle_item = raffle_item.id LEFT JOIN registration.camper REC ON tx.receiver_id = REC.id LEFT JOIN registration.camper SEN ON tx.sender_id = SEN.id LEFT JOIN registration.camper OWN ON inventory.camper_id = OWN.id LEFT JOIN spark_user REC_S ON receiver_id = REC_S.camper_id LEFT JOIN spark_user SEN_S ON sender_id = SEN_S.camper_id LEFT JOIN spark_user OWN_S ON inventory.camper_id = OWN_S.camper_id" + (req.user.staffer != 2 ? " WHERE tx.sender_id = ? OR tx.receiver_id = ? OR inventory.camper_id = ?" : "") + " ORDER BY tx_time DESC;", [req.user.camper_id, req.user.camper_id, req.user.camper_id], (err, result) => {
 		if (err || !result) next(err);
 		// create filtered return object:
@@ -446,7 +446,7 @@ app.get("/logout", (req, res) => {
 		});
 		res.json(result);
 	});
-});*/
+});
 
 app.use(function(err, req, res, next) { // handle all other thrown errors
 	if (err.login) // handle login errors

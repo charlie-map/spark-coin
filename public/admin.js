@@ -611,6 +611,23 @@ $(".camper-information-body").on('click', '.icon-objects.pump', function() {
 // logs
 
 $(".watch-logs").click(function() {
+	$.ajax({
+		method: "GET",
+		url: "/txTest",
+		success: function(all_logs) {
+
+			all_logs.forEach(log => { // time for another object :D
+
+				let inventory_item;
+
+				inventory_item = "<div"
+			});
+		},
+		error: function(error) {
+			console.log(error);
+			popout_alert(error);
+		}
+	})
 
 	$(".log-popup").addClass("open");
 });

@@ -986,12 +986,13 @@ input:invalid {
 	top: -101%;
 	left: 0px;
 	width: 100%;
-	height: 100%;
+	height: 0px;
 	transition: 1s ease;
 }
 
 .log-popup.open {
 	top: 0px;
+	height: 100%;
 	transition: 1s ease;
 }
 
@@ -1015,12 +1016,10 @@ input:invalid {
 	justify-content: center;
 }
 
-.all-logs-select, .purchase-logs-select {
-	background: #eca465 !important;
-}
-
-.all-logs-select.button-selected, .purchase-logs-select.button-selected {
-	background: #bd4881 !important;
+.logs-inventory {
+	height: calc(100% - 70px);
+	overflow-y: scroll;
+	background: #eca465;
 }
 
 @media only screen and (max-width: 500px), screen and (max-height: 700px) {

@@ -1022,6 +1022,75 @@ input:invalid {
 	background: #eca465;
 }
 
+.logs-inventory > div {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	margin: 7px 0;
+	background-color: #f7e88f;
+	height: 60px;
+}
+
+.align-extra-log-info {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+	height: 90%;
+}
+
+.display-log-time {
+	border-radius: 3px;
+	width: 100%;
+	padding: 2px;
+	background-color: #bd4881;
+}
+
+.log-item-owner-info {
+	border-radius: 3px;
+	width: 100%;
+	padding: 2px;
+	background-color: #496a81;
+}
+
+.log-item-owner-info p {
+	padding: 0;
+	margin: 0;
+}
+
+.purchase-extra-info {
+	display: none;
+}
+
+.purchase-extra-info.open {
+	border-radius: 3px;
+	display: block;
+	position: absolute;
+	left: 58px;
+	width: 50%;
+	background-color: white;
+	padding: 5px;
+}
+
+.purchaser-log-info {
+	border-radius: 3px;
+	height: 40px;
+	background-color: #00a6a6;
+	margin-left: 10px;
+	padding: 5px;
+	display: flex;
+	align-items: center;
+}
+
+.purchase-item-url {
+	border-radius: 3px;
+}
+
+.purchase-item-url:hover {
+	cursor: pointer;
+}
+
 @media only screen and (max-width: 500px), screen and (max-height: 700px) {
 	.send-item-popup {
 		position: absolute;

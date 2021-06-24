@@ -423,6 +423,7 @@ app.get("/txTest", isLoggedIn(2), (req, res, next) => {
 			if (!tx.receiver_id) {	// purchase/raffle
 				new_tx.purchase = 1;
 				new_tx.raffle = tx.raffle_item ? 1 : 0;
+				new_tx.item_id = tx.raffle_item ? tx.raffle_item : tx.inventory_item;
 				new_tx.item_name = tx.item_name;
 				new_tx.description = tx.description;
 				new_tx.image_url = tx.image_url;
@@ -444,6 +445,19 @@ app.get("/txTest", isLoggedIn(2), (req, res, next) => {
 			}
 			return new_tx;	
 		});
+		result = result.reduce((result, tx) => {
+			if (tx.purchase && tx.raffle) {
+				let raffleSearch = result.find((tx_search) => {
+					return tx.item_id == tx_search.item_id;
+				});
+				if (raffleSearch) // we already have a trasaction for this so increase the quantity instead of logging again
+					raffleSearch.price++;
+				else
+					result.push(tx);
+			} else
+				result.push(tx);
+			return result;
+		}, []);
 		res.json(result);
 	});
 });
@@ -529,6 +543,7 @@ io.on('connection', (socket) => {
 				if (!tx.receiver_id) {	// purchase/raffle
 					new_tx.purchase = 1;
 					new_tx.raffle = tx.raffle_item ? 1 : 0;
+					new_tx.item_id = tx.raffle_item ? tx.raffle_item : tx.inventory_item;
 					new_tx.item_name = tx.item_name;
 					new_tx.description = tx.description;
 					new_tx.image_url = tx.image_url;
@@ -550,6 +565,21 @@ io.on('connection', (socket) => {
 				}
 				return new_tx;	
 			});
+			if (socket.user.staffer == 0) {
+				result = result.reduce((result, tx) => {
+					if (tx.purchase && tx.raffle) {
+						let raffleSearch = result.find((tx_search) => {
+							return tx.item_id == tx_search.item_id;
+						});
+						if (raffleSearch) // we already have a trasaction for this so increase the quantity instead of logging again
+							raffleSearch.price++;
+						else
+							result.push(tx);
+					} else
+						result.push(tx);
+					return result;
+				}, []);
+			}
 			cb(result);
 		});
 	});

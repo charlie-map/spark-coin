@@ -617,6 +617,7 @@ $(".watch-logs").click(function() {
 		method: "GET",
 		url: "/txTest",
 		success: function(all_logs) {
+			$(".logs-inventory").empty();
 
 			all_logs.forEach(log => { // time for another object :D
 
@@ -628,10 +629,9 @@ $(".watch-logs").click(function() {
 					"<div class='align-extra-log-info'>" +
 					"<div class='display-log-time'>" + months[new Date(log.tx_time).getMonth()] + " " + new Date(log.tx_time).getDate() + "-" + new Date(log.tx_time).getHours() + ":" + new Date(log.tx_time).getMinutes() + "</div>" +
 					"<div class='log-item-owner-info'>" +
-					(log.raffle ? "<p class='raffle-item-owner'>RAFFLE</p>" :
+					(log.raffle ? "RAFFLE - " + log.price :
 						"<div class='log-item-owner'>" +
-						"<p>" + log.owner_name + "</p>" +
-						log.price) +
+						(log.owner_name ? log.owner_name : "❓❓❓") + " - " + log.price + "</div>") +
 					"</div>" +
 					"</div>" +
 					"<div class='purchaser-log-info'>" + log.purchaser_name + "</div>" +
@@ -646,6 +646,10 @@ $(".watch-logs").click(function() {
 	})
 
 	$(".log-popup").addClass("open");
+});
+
+$(".logs-inventory").scroll(function() {
+	$(".purchase-extra-info").removeClass('open');
 });
 
 $(".logs-inventory").on("click", ".purchase-item-url", function() {

@@ -161,7 +161,7 @@ app.delete("/inventory", isLoggedIn(1), (req, res) => {
 	if (!req.body.id) return next(new Error('Required field missing.'));
 	connection.query("UPDATE inventory SET active = 0 WHERE id = ? AND camper_id = ?;", [req.body.id, req.user.id], (err) => {
 		if (err) return next(err);
-		res.end();
+		res.end(req.body.id);
 	});
 });
 

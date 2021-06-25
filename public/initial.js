@@ -75,6 +75,7 @@ $(window).on('resize', function() {
 
 $(".icon-div").click(function() {
 	if ($(this).hasClass('open-inventory')) {
+		console.log("inventory");
 		if ($(".inventory-popup").hasClass('open')) {
 			$(".inventory-popup").removeClass('open');
 			return;

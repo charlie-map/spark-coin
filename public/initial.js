@@ -110,7 +110,7 @@ function pull_inventory() {
 
 $(".icon-div").click(function() {
 	if ($(this).hasClass('open-inventory')) {
-
+		pull_inventory();
 	} else if ($(this).hasClass('send-item')) {
 		if ($(".send-item-popup").hasClass('open')) {
 			$(".send-item-popup").removeClass('open');

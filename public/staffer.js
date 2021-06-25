@@ -186,6 +186,13 @@ $(".icon-div").click(function() {
 					popout_alert("Success!");
 			});
 		});
+	} else if ($(this).hasClass('needs-slack-id')) {
+		if ($(".input-slack-id-popup").hasClass('open')) {
+			$(".input-slack-id-popup").removeClass('open');
+			return;
+		}
+
+		$(".input-slack-id-popup").addClass('open');
 	}
 });
 
@@ -363,4 +370,28 @@ $(".logs-inventory").on("click", ".purchase-item-url", function() {
 
 $(".close-logs").click(function() {
 	$(".log-popup").removeClass("open");
+});
+
+// slack id
+
+$(".slack-closer").click(function() {
+	$(".input-slack-id-popup").removeClass("open");
+});
+
+$("#submit-new-slack-id").click(function(event) {
+	event.preventDefault();
+
+	$.ajax({
+		method: "POST",
+		url: "/slack",
+		data: {
+			slack_id: $("#new-slack-id").val()
+		},
+		success: function() {
+			popout_alert("Success!");
+
+			$(".input-slack-id-popup").removeClass("open");
+			$(".needs-slack-id").removeClass("open");
+		}
+	});
 });

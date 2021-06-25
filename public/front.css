@@ -1092,6 +1092,71 @@ input:invalid {
 	cursor: pointer;
 }
 
+.needs-slack-id > ion-icon {
+	display: none;
+}
+
+.needs-slack-id {
+	height: 0px;
+	transition: 1s ease;
+}
+
+.needs-slack-id.open > ion-icon {
+	display: block !important;
+}
+
+.needs-slack-id.open {
+	height: 70px;
+	background-color: #f7e88f;
+	animation: slidein 2s linear;
+}
+
+.input-slack-id-popup {
+	position: absolute;
+	background: white;
+	top: -101%;
+	left: 0px;
+	width: 100%;
+	height: 0px;
+	transition: 1s ease;
+}
+
+.input-slack-id-popup.open {
+	top: 20%;
+	height: 200px;
+	transition: 1s ease;
+}
+
+.input-slack-id-popup h1 {
+	margin: 0;
+	left: 0px;
+	height: 70px;
+	width: 80%;
+	text-align: center;
+	line-height: 200%;
+}
+
+.slack-closer {
+	position: absolute;
+	width: 70px;
+	height: 70px;
+	top: 0px;
+	right: 0px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+@keyframes slidein {
+	from {
+		transform: translateX(100%);
+	}
+
+	to {
+		transform: translateX(0%);
+	}
+}
+
 @media only screen and (max-width: 500px), screen and (max-height: 700px) {
 	.send-item-popup {
 		position: absolute;

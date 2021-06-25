@@ -39,6 +39,9 @@
 				<div class="icon-div watch-logs">
 					<ion-icon class="icon-objects" name="folder-outline"></ion-icon>
 				</div>
+				<div class="icon-div needs-slack-id {{NEEDSLACK}}">
+					<ion-icon class="icon-objects" name="alert-outline"></ion-icon>
+				</div>
 			</div>
 			<div class="inventory-popup">
 				<h1>Current Inventory</h1>
@@ -92,6 +95,16 @@
 					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
 				</div>
 				<div class="logs-inventory"></div>
+			</div>
+			<div class="input-slack-id-popup">
+				<h1>Enter Slack ID</h1>
+				<div class="slack-closer">
+					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
+				</div>
+				<form method="POST" action="/nowhere">
+					<input type="text" id="new-slack-id" placeholder="Insert Slack ID Here">
+					<input type="submit" value="Send" class="submit-button" id="submit-new-slack-id">
+				</form>
 			</div>
 		</div>
 		

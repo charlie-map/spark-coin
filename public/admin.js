@@ -657,6 +657,8 @@ $(".logs-inventory").on("click", ".purchase-item-url", function() {
 	if ($(this).siblings(".purchase-extra-info").hasClass('open')) {
 		$(this).siblings(".purchase-extra-info").removeClass('open');
 	} else {
+		console.log($(this).offset().top);
+		$(this).siblings(".purchase-extra-info").css("top", $(this).offset().top);
 		$(this).siblings(".purchase-extra-info").addClass('open');
 	}
 });

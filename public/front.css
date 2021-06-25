@@ -1074,7 +1074,8 @@ input:invalid {
 }
 
 .purchaser-log-info {
-	border-radius: 3px;
+	border-top-left-radius: 3px;
+	border-bottom-left-radius: 3px;
 	height: 40px;
 	background-color: #00a6a6;
 	margin-left: 10px;

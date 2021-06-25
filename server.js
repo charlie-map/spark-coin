@@ -671,6 +671,8 @@ io.on('connection', (socket) => {
 
 			// notify all parties
 			socket.emit('balance', bal, -1);
+			if (item.quantity == 1)
+				io.emit('remove-final-item');
 			let message = 'Item ' + item.item_name + ' was purchased by ' + socket.user.first_name + ' ' + socket.user.last_name + ' (#' + socket.user.camper_id + ')!' + ' There are ' + (item.quantity - 1) + ' of these left.';
 			if (!item.camper_id) { // camp-wide alert for camp-wide item
 				// loop through users and find all admins

@@ -180,7 +180,6 @@ $(".icon-div").click(function() {
 			});
 		});
 	} else if ($(this).hasClass('camper-information')) {
-		console.log("here", $(".camper-information-popup").hasClass('open'));
 		if ($(".camper-information-popup").hasClass('open')) {
 			$(".camper-information-popup").removeClass('open');
 			return;
@@ -361,7 +360,6 @@ $("#submit-add-inventory-item").click(function(event) {
 			$("#item_image1").val("");
 		},
 		error: function(error) {
-			console.log(error.responseText);
 			popout_alert(error.responseText);
 		}
 	});
@@ -530,7 +528,6 @@ $(".camper-information-popup").on("click", "ion-icon.edit-camper-name", function
 	let camper_id = $(this).parent().parent().parent().attr('id').replace(/[^0-9]/g, "");
 
 	let camper_name = $(this).parent().parent().parent().children('.upperware-camper-information').children('.item-info').text().substring(3 + parseInt(camper_id, 10));
-	console.log(camper_id, camper_name);
 
 	$(".edit-camper-name-information-popup").children("h1").text("Edit Camp Name for #" + camper_id + " " + camper_name);
 	$(".edit-camper-name-information-popup").addClass('open');
@@ -625,16 +622,16 @@ $(".watch-logs").click(function() {
 
 				inventory_item = "<div>" +
 					"<div style='background-image: url(" + (log.image_url ? log.image_url : "https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d") + ")'" + "class='purchase-item-url spark-logo-inventory'></div>" +
-					"<div class='purchase-extra-info'>" + log.item_name + " - " + log.description + "</div>" +
+					"<div class='purchase-extra-info'>" + (log.purchase ? log.item_name + " - " + log.description : log.message) + "</div>" +
 					"<div class='align-extra-log-info'>" +
 					"<div class='display-log-time'>" + months[new Date(log.tx_time).getMonth()] + " " + new Date(log.tx_time).getDate() + "-" + new Date(log.tx_time).getHours() + ":" + new Date(log.tx_time).getMinutes() + "</div>" +
 					"<div class='log-item-owner-info'>" +
-					(log.raffle ? "RAFFLE - " + log.price :
+					(log.raffle ? "RAFFLE - " + (log.purchase ? log.price : log.amount) :
 						"<div class='log-item-owner'>" +
-						(log.owner_name ? log.owner_name : "❓❓❓") + " - " + log.price + "</div>") +
+						(log.purchase ? log.owner_name ? log.owner_name : "❓❓❓" : log.sender_name) + " - " + (log.purchase ? log.price : log.amount) + "</div>") +
 					"</div>" +
 					"</div>" +
-					"<div class='purchaser-log-info'>" + log.purchaser_name + "</div>" +
+					"<div class='purchaser-log-info'>" + (log.purchase ? log.purchaser_name : log.receiver_name) + "</div>" +
 					"</div>";
 
 				$(".logs-inventory").append(inventory_item);
@@ -657,7 +654,6 @@ $(".logs-inventory").on("click", ".purchase-item-url", function() {
 	if ($(this).siblings(".purchase-extra-info").hasClass('open')) {
 		$(this).siblings(".purchase-extra-info").removeClass('open');
 	} else {
-		console.log($(this).offset().top);
 		$(this).siblings(".purchase-extra-info").css("top", $(this).offset().top);
 		$(this).siblings(".purchase-extra-info").addClass('open');
 	}

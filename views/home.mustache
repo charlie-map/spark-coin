@@ -12,6 +12,12 @@
 		<title>⚪ Sparks</title>
 	</head>
 	<body>
+		<div class="spin-container">
+			<div class="spin" id="loader"></div>
+			<div class="spin" id="loader2"></div>
+			<div class="spin" id="loader3"></div>
+			<div class="spin" id="loader4"></div>
+		</div>
 		<div class="container">
 			<div style="position: absolute; top: 20px" class="spark-logo">
 				<a href="https://summerspark.stab.org"></a>
@@ -28,6 +34,9 @@
 				</div>
 				<div class="icon-div send-item">
 					<ion-icon class="icon-objects" name="send-outline"></ion-icon>
+				</div>
+				<div class="icon-div watch-logs">
+					<ion-icon class="icon-objects" name="folder-outline"></ion-icon>
 				</div>
 			</div>
 			<div class="inventory-popup">
@@ -66,6 +75,13 @@
 					<input type="text" name="message" id="message_send_item" placeholder="Message">
 					<input type="submit" value="Send" class="submit-button" id="submit-sparks">
 				</form>
+			</div>
+			<div class="log-popup">
+				<h1>Current Logs</h1>
+				<div class="close-logs">
+					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
+				</div>
+				<div class="logs-inventory"></div>
 			</div>
 		</div>
 		

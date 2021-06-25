@@ -125,9 +125,14 @@ app.get("/", isLoggedIn(), (req, res, next) => {
 	connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
 		if (err || !result) return next(new Error('Database error.'));
 		req.user.balance = result[0].balance;
-		res.render("home", {
-			BALANCE: req.user.balance
-		});
+		if (req.user.staffer == 1)
+			res.render("staff_home", {
+				BALANCE: req.user.balance
+			});
+		else
+			res.render("home", {
+				BALANCE: req.user.balance
+			});
 	});
 });
 

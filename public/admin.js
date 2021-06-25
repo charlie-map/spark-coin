@@ -80,6 +80,8 @@ function pull_inventory(admin_or_all) {
 
 		success: function(all_inventory) {
 
+			console.log(all_inventory);
+
 			if (admin_or_all == "admin") $(".inner-inventory.admin").empty();
 			else if (admin_or_all == "all") $(".inner-inventory.all").empty();
 			else if (admin_or_all == "raffle") $(".inner-inventory.raffle").empty();

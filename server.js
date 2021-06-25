@@ -122,12 +122,13 @@ app.get("/", isLoggedIn(), (req, res, next) => {
 			BALANCE: '∞'
 		});
 	}
-	connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
+	connection.query("SELECT balance, slack_id IS NULL as needs_slack FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
 		if (err || !result) return next(new Error('Database error.'));
 		req.user.balance = result[0].balance;
 		if (req.user.staffer == 1)
 			res.render("staff_home", {
-				BALANCE: req.user.balance
+				BALANCE: req.user.balance,
+				NEEDSLACK: result[0].needs_slack ? "open" : ""
 			});
 		else
 			res.render("home", {
@@ -162,6 +163,14 @@ app.delete("/inventory", isLoggedIn(1), (req, res) => {
 	connection.query("UPDATE inventory SET active = 0 WHERE id = ? AND camper_id = ?;", [req.body.id, req.user.id], (err) => {
 		if (err) return next(err);
 		res.end(req.body.id);
+	});
+});
+
+app.post("/slack", isLoggedIn(1), (req, res, next) => {
+	if (!req.body.slack_id) return next(new Error('Required field missing'));
+	connection.query("UPDATE spark_user SET slack_id = ? WHERE camper_id = ?;", [req.body.slack_id, req.user.id], (err) => {
+		if (err) return next(err);
+		res.end();
 	});
 });
 

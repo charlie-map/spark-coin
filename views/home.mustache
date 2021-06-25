@@ -12,6 +12,12 @@
 		<title>⚪ Sparks</title>
 	</head>
 	<body>
+		<div class="spin-container">
+			<div class="spin" id="loader"></div>
+			<div class="spin" id="loader2"></div>
+			<div class="spin" id="loader3"></div>
+			<div class="spin" id="loader4"></div>
+		</div>
 		<div class="container">
 			<div style="position: absolute; top: 20px" class="spark-logo">
 				<a href="https://summerspark.stab.org"></a>
@@ -29,31 +35,16 @@
 				<div class="icon-div send-item">
 					<ion-icon class="icon-objects" name="send-outline"></ion-icon>
 				</div>
+				<div class="icon-div watch-logs">
+					<ion-icon class="icon-objects" name="folder-outline"></ion-icon>
+				</div>
 			</div>
 			<div class="inventory-popup">
 				<h1>Current Inventory</h1>
 				<div class="close-inventory">
 					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
 				</div>
-				<div class="inner-inventory non-admin">
-					<div id="initial-inventory">
-						<div class="display-styling-inventory">
-							<div style="background-image: url('https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d');" class="spark-logo-inventory"></div>
-							<div class="item-info">
-								<div style="display: inline;" class="item-name">Ball</div>
-								<ion-icon name="chevron-forward-outline"></ion-icon>
-								<div style="display: inline;" class="seller">Head</div>
-							</div>
-							<button class="purchase-item">
-							<span class="lightning-bolt-button">⚡</span>
-							<span class="price">20</span>
-							</button>
-						</div>
-						<div class="inventory-descript">
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur sed arcu et urna accumsan mollis. Aliquam vitae nibh libero. Maecenas a neque vitae eros fringilla scelerisque id non nisi. Phasellus diam est, aliquet nec auctor varius, condimentum a erat. Praesent imperdiet lacus ipsum, id tristique libero volutpat sed. Etiam eget accumsan tellus, eu consectetur felis. Proin rutrum metus eu justo fermentum, faucibus porttitor velit gravida. Sed nisi ligula, condimentum sit amet nisl vel, fermentum venenatis mauris. Duis non eros placerat, commodo justo at, volutpat ligula. Cras sodales lacinia risus ut suscipit. Nulla semper in nibh ut pretium.
-						</div>
-					</div>
-				</div>
+				<div class="inner-inventory non-admin"></div>
 			</div>
 			<div class="send-item-popup">
 				<h1>Send Sparks</h1>
@@ -66,6 +57,13 @@
 					<input type="text" name="message" id="message_send_item" placeholder="Message">
 					<input type="submit" value="Send" class="submit-button" id="submit-sparks">
 				</form>
+			</div>
+			<div class="log-popup">
+				<h1>Current Logs</h1>
+				<div class="close-logs">
+					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
+				</div>
+				<div class="logs-inventory"></div>
 			</div>
 		</div>
 		

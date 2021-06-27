@@ -818,6 +818,10 @@ input:invalid {
 	padding: 1px;
 }
 
+.raffle-drawing-winnders > div:last-child {
+	margin-bottom: 25px;
+}
+
 .display-styling-inventory-raffle {
 	display: flex;
 	flex-direction: row;
@@ -857,6 +861,10 @@ input:invalid {
 .camper-information-body > div {
 	background: #f7e88f;
 	margin-bottom: 15px;
+}
+
+.camper-information-body > div:last-child {
+	margin-bottom: 20px;
 }
 
 .camper-information-body {

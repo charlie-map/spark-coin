@@ -934,6 +934,7 @@ input:invalid {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+	z-index: 5;
 }
 
 .edit-camper-name-information-popup.open {

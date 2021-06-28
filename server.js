@@ -37,6 +37,10 @@ connection.connect((err) => {
 	if (err) throw err;
 });
 
+connection.query("INSERT INTO settings (name, value) VALUES ('connection-uuid', " + process.env.CONNECTION_UUID + ");", (err, result) => {
+	if (err) throw err;
+});
+
 app.use(express.static(__dirname + "/public"));
 
 app.set('views', __dirname + "/views");
@@ -398,6 +402,35 @@ app.get("/admin/log/purchase", isLoggedIn(2), (req, res, next) => {
 	connection.query("SELECT * FROM tx INNER JOIN inventory ON tx.inventory_item = inventory.id WHERE inventory.active = 1 ORDER BY tx_time DESC;", (err, result) => {
 		if (err) return next(err);
 		res.json(result);
+	});
+});
+
+app.get("/admin/connection-check/:code", (req, res, next) => {
+	connection.query("SELECT value FROM settings WHERE name='connection-uuid'", (err, code_check) => {
+		if (err) return next(err);
+
+		if (code_check[0].value != req.params.code)
+			return res.end("Invalid uuid");
+
+		connection.query("SELECT value FROM settings", function(err, value) {
+			if (!err) {
+				res.end("No error :)");
+			}
+			if (err) {
+				connection = mysql.createConnection({
+					host: process.env.HOST,
+					database: process.env.DATABASE,
+					password: process.env.PASSWORD,
+					user: process.env.USER_NAME,
+					insecureAuth: true
+				});
+				connection.connect((err) => {
+					if (err) throw err;
+					console.log("No restart error");
+					res.end("Mysql rebooted ;)");
+				});
+			}
+  		});
 	});
 });
 

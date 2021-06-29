@@ -773,6 +773,7 @@ io.on('connection', (socket) => {
 		if (amount == "NaN") return cb("Not a valid amount.");
 		amount = roundTo(amount, 3);
 		if (!(amount > 0)) return cb("Not a valid amount.");
+		if (socket.user.camper_id == receiving_id) return cb("Can't transfer Sparks to yourself.");
 		try {
 			// get/verify amounts
 			let sending_bal = socket.user.staffer == 2 ? Infinity : await new Promise((resolve, reject) => {

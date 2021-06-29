@@ -409,6 +409,7 @@ input:invalid {
 .inner-inventory.non-admin {
 	display: block;
 	overflow-y: scroll;
+	max-height: calc(100% - 70px);
 }
 
 .inner-inventory > div.non-active {

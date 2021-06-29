@@ -200,7 +200,7 @@ app.get("/admin/inventory", isLoggedIn(2), (req, res, next) => {
 });
 
 app.get("/admin/inventory/all", isLoggedIn(2), (req, res, next) => {
-	connection.query("SELECT * FROM inventory;", (err, result) => {
+	connection.query("SELECT inventory.*, COALESCE(spark_user.camp_name, CONCAT(registration.camper.first_name, ' ', registration.camper.last_name)) AS owner FROM inventory LEFT JOIN spark_user ON inventory.camper_id=spark_user.camper_id LEFT JOIN registration.camper ON registration.camper.id=spark_user.camper_id;", (err, result) => {
 		if (err) return next(err);
 		res.json(result);
 	});

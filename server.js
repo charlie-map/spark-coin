@@ -37,10 +37,6 @@ connection.connect((err) => {
 	if (err) throw err;
 });
 
-connection.query("INSERT INTO settings (name, value) VALUES ('connection-uuid', " + process.env.CONNECTION_UUID + ");", (err, result) => {
-	if (err) throw err;
-});
-
 app.use(express.static(__dirname + "/public"));
 
 app.set('views', __dirname + "/views");
@@ -405,33 +401,29 @@ app.get("/admin/log/purchase", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
-app.get("/admin/connection-check/:code", (req, res, next) => {
-	connection.query("SELECT value FROM settings WHERE name='connection-uuid'", (err, code_check) => {
-		if (err) return next(err);
+app.post("/admin/connection-check", (req, res, next) => {
+	if ("744c5835-555b-4173-8309-37fba8fbb155" != req.body.code)
+		return res.end("Invalid uuid");
 
-		if (code_check[0].value != req.params.code)
-			return res.end("Invalid uuid");
-
-		connection.query("SELECT value FROM settings", function(err, value) {
-			if (!err) {
-				res.end("No error :)");
-			}
-			if (err) {
-				connection = mysql.createConnection({
-					host: process.env.HOST,
-					database: process.env.DATABASE,
-					password: process.env.PASSWORD,
-					user: process.env.USER_NAME,
-					insecureAuth: true
-				});
-				connection.connect((err) => {
-					if (err) throw err;
-					console.log("No restart error");
-					res.end("Mysql rebooted ;)");
-				});
-			}
-  		});
-	});
+	connection.query("SELECT value FROM settings", function(err, value) {
+		if (!err) {
+			res.end("No error :)");
+		}
+		if (err) {
+			connection = mysql.createConnection({
+				host: process.env.HOST,
+				database: process.env.DATABASE,
+				password: process.env.PASSWORD,
+				user: process.env.USER_NAME,
+				insecureAuth: true
+			});
+			connection.connect((err) => {
+				if (err) throw err;
+				console.log("No restart error");
+				res.end("Mysql rebooted ;)");
+			});
+		}
+  	});
 });
 
 /* AUTHENTICATION ENDPOINTS */

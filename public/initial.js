@@ -75,7 +75,10 @@ $(window).on('resize', function() {
 
 function pull_inventory() {
 	if ($(".inventory-popup").hasClass('open')) {
+		$(".inventory-popup").show();
 		$(".inventory-popup").removeClass('open');
+
+		setTimeout($(".inventory-popup").hide(), 1000);
 		return;
 	}
 

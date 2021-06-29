@@ -408,6 +408,7 @@ input:invalid {
 
 .inner-inventory.non-admin {
 	display: block;
+	overflow-y: scroll;
 }
 
 .inner-inventory > div.non-active {

@@ -541,8 +541,8 @@ function sendTxUpdates(camper_id, role) {
 
 io.on('connection', (socket) => {
 	// parse cookie to associate user with this session
-	if (!socket.client.conn.request.headers.cookie || !socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid=')))
-		socket.disconnect();
+	if (!(socket.client.conn.request.headers.cookie && socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid='))))
+		return socket.disconnect();
 	let sid = decodeURIComponent(socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid=')).split('=')[1]);
 	sid = signature.unsign(sid.substring(2), sess_secret);
 	if (!sid)

@@ -1167,6 +1167,10 @@ input:invalid {
 }
 
 @media only screen and (max-width: 500px), screen and (max-height: 700px) {
+	#test-slider {
+		transform: scale(2%);
+	}
+
 	.send-item-popup {
 		position: absolute;
 		background: white;

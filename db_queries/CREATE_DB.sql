@@ -12,6 +12,7 @@ CREATE TABLE settings (
 INSERT INTO settings (name, value) VALUES ('raffle', 0);
 INSERT INTO settings (name, value) VALUES ('starter_coins', 10);
 INSERT INTO settings (name, value) VALUES ('staff_coins', 250);
+INSERT INTO settings (name, value) VALUES ('block_camper', 1);
 
 CREATE TABLE spark_user (
 	camper_id INT NOT NULL,

@@ -68,6 +68,7 @@ app.use(sess);
 
 let user_sockets = {};
 let settings = {};
+let closed_camper_view = 0;
 
 /* BOTTOMWARE */
 
@@ -130,15 +131,33 @@ app.get("/", isLoggedIn(), (req, res, next) => {
 				BALANCE: req.user.balance,
 				NEEDSLACK: result[0].needs_slack ? "open" : ""
 			});
-		else
-			res.render("home", {
-				BALANCE: req.user.balance
-			});
+		else {
+			if (!closed_camper_view)
+				res.render("home", {
+					BALANCE: req.user.balance
+				});
+			else
+				res.sendFile(__dirname + "/views/offline.html");
+		}
 	});
 });
 
 app.get("/raffle", isLoggedIn(), (req, res) => {
-	res.end(""+settings.raffle);
+	res.end("" + settings.raffle);
+});
+
+app.post("/close-sparks", (req, res) => {
+	connection.query("SELECT value FROM settings WHERE name='block_camper'", (err, uuid_value) => {
+		if (err) return next(err);
+
+		if (uuid_value[0].value != req.body.close_uuid) return next(new Error("Incorrect credentials"));
+		closed_camper_view = 1;
+
+		setTimeout(function() { // turn the camper view back on
+			closed_camper_view = 0;
+
+		}, 3630000)
+	});
 });
 
 /* STAFFER ENDPOINTS */
@@ -271,7 +290,7 @@ app.post("/admin/reset", isLoggedIn(2), (req, res, next) => {
 	if (!req.body.camper_id) return next(new Error('Required field missing.'));
 	let new_pin = Math.floor(1000 + Math.random() * 9000);
 	connection.query("UPDATE spark_user SET pin = ? WHERE camper_id = ?;", [new_pin, req.body.camper_id], (err) => {
-		res.end(""+new_pin);
+		res.end("" + new_pin);
 	});
 });
 
@@ -423,7 +442,7 @@ app.post("/admin/connection-check", (req, res, next) => {
 				res.end("Mysql rebooted ;)");
 			});
 		}
-  	});
+	});
 });
 
 /* AUTHENTICATION ENDPOINTS */
@@ -459,7 +478,7 @@ app.get("/txTest", isLoggedIn(2), (req, res, next) => {
 		result = result.map((tx) => {
 			let new_tx = {};
 			new_tx.tx_time = tx.tx_time;
-			if (!tx.receiver_id) {	// purchase/raffle
+			if (!tx.receiver_id) { // purchase/raffle
 				new_tx.purchase = 1;
 				new_tx.raffle = tx.raffle_item ? 1 : 0;
 				new_tx.item_id = tx.raffle_item ? tx.raffle_item : tx.inventory_item;
@@ -472,7 +491,7 @@ app.get("/txTest", isLoggedIn(2), (req, res, next) => {
 				new_tx.purchaser_name = tx.sender_name;
 				new_tx.owner_id = tx.owner_id;
 				new_tx.owner_name = tx.owner;
-			} else {	// xfer
+			} else { // xfer
 				new_tx.purchase = 0;
 				new_tx.received = tx.receiver_id == req.user.camper_id;
 				new_tx.receiver_id = tx.receiver_id;
@@ -482,7 +501,7 @@ app.get("/txTest", isLoggedIn(2), (req, res, next) => {
 				new_tx.amount = tx.amount;
 				new_tx.message = tx.message;
 			}
-			return new_tx;	
+			return new_tx;
 		});
 		result = result.reduce((result, tx) => {
 			if (tx.purchase && tx.raffle) {
@@ -525,7 +544,7 @@ function sendTxUpdates(camper_id, role) {
 			else last_login = result[0].last_login;
 			// determine transactions to report based on role
 			let query_string;
-			let query_params = [ last_login, camper_id, camper_id ];
+			let query_params = [last_login, camper_id, camper_id];
 			if (role > 0) { // if they are a staffer / admin it's all tx's that are for their INVENTORY ITEMS as well as direct transfers (sender or receiver)
 				query_string = "SELECT * FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id WHERE tx_time > ? AND ( sender_id = ? OR receiver_id = ? OR inventory.camper_id " + (role == 2 ? " IS NULL);" : " = ?);");
 				if (role != 2) query_params.push(camper_id);
@@ -554,8 +573,14 @@ io.on('connection', (socket) => {
 			// upon initial socket connection, deliver tx updates from before last socket pulse
 			sendTxUpdates(socket.user.camper_id, socket.user.staffer).then((result) => {
 				socket.emit('tx_update', result);
-				updateLogin(socket.user.camper_id).catch((err) => { console.error(err); return; });
-			}).catch((err) => { console.error(err); return; });
+				updateLogin(socket.user.camper_id).catch((err) => {
+					console.error(err);
+					return;
+				});
+			}).catch((err) => {
+				console.error(err);
+				return;
+			});
 		});
 
 	socket.on('disconnect', () => {
@@ -568,7 +593,9 @@ io.on('connection', (socket) => {
 	// if admin, this is all transactions fully decorated with names as spec'd
 	socket.on('tx_get', (cb) => {
 		if (!socket.user) return cb("Not logged in.");
-		updateLogin(socket.user.camper_id).catch(() => {return;});
+		updateLogin(socket.user.camper_id).catch(() => {
+			return;
+		});
 		connection.query("SELECT tx_time, raffle_item, COALESCE(inventory.item_name, raffle_item.item_name) AS item_name, COALESCE(inventory.description, raffle_item.description) AS description, COALESCE(inventory.image_url, raffle_item.image_url) AS image_url, inventory.camper_id AS owner_id, COALESCE(OWN_S.camp_name, CONCAT(OWN.first_name, ' ', OWN.last_name)) AS owner, price, COALESCE(inventory.active, raffle_item.active) AS active, receiver_id, sender_id, COALESCE(REC_S.camp_name, CONCAT(REC.first_name, ' ', REC.last_name)) AS receiver_name, COALESCE(SEN_S.camp_name, CONCAT(SEN.first_name, ' ', SEN.last_name)) AS sender_name, amount, message FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id LEFT JOIN raffle_item ON tx.raffle_item = raffle_item.id LEFT JOIN registration.camper REC ON tx.receiver_id = REC.id LEFT JOIN registration.camper SEN ON tx.sender_id = SEN.id LEFT JOIN registration.camper OWN ON inventory.camper_id = OWN.id LEFT JOIN spark_user REC_S ON receiver_id = REC_S.camper_id LEFT JOIN spark_user SEN_S ON sender_id = SEN_S.camper_id LEFT JOIN spark_user OWN_S ON inventory.camper_id = OWN_S.camper_id" + (socket.user.staffer != 2 ? " WHERE tx.sender_id = ? OR tx.receiver_id = ? OR inventory.camper_id = ?" : "") + " ORDER BY tx_time DESC;", [socket.user.camper_id, socket.user.camper_id, socket.user.camper_id], (err, result) => {
 			if (err || !result) cb([]);
 			// create filtered return object:
@@ -579,7 +606,7 @@ io.on('connection', (socket) => {
 			result = result.map((tx) => {
 				let new_tx = {};
 				new_tx.tx_time = tx.tx_time;
-				if (!tx.receiver_id) {	// purchase/raffle
+				if (!tx.receiver_id) { // purchase/raffle
 					new_tx.purchase = 1;
 					new_tx.raffle = tx.raffle_item ? 1 : 0;
 					new_tx.item_id = tx.raffle_item ? tx.raffle_item : tx.inventory_item;
@@ -592,7 +619,7 @@ io.on('connection', (socket) => {
 					new_tx.purchaser_name = tx.sender_name;
 					new_tx.owner_id = tx.owner_id;
 					new_tx.owner_name = tx.owner;
-				} else {	// xfer
+				} else { // xfer
 					new_tx.purchase = 0;
 					new_tx.received = tx.receiver_id == socket.user.camper_id;
 					new_tx.receiver_id = tx.receiver_id;
@@ -602,7 +629,7 @@ io.on('connection', (socket) => {
 					new_tx.amount = tx.amount;
 					new_tx.message = tx.message;
 				}
-				return new_tx;	
+				return new_tx;
 			});
 			if (socket.user.staffer == 0) {
 				result = result.reduce((result, tx) => {
@@ -625,7 +652,9 @@ io.on('connection', (socket) => {
 
 	socket.on('inventory_get', async (cb) => {
 		if (!socket.user) return cb("Not logged in.");
-		updateLogin(socket.user.camper_id).catch(() => {return;});
+		updateLogin(socket.user.camper_id).catch(() => {
+			return;
+		});
 		// if raffle, send raffle items instead
 		let query_string;
 		if (settings.raffle)
@@ -641,7 +670,9 @@ io.on('connection', (socket) => {
 
 	socket.on('purchase', async (item_id, cb) => {
 		if (!socket.user || socket.user.staffer != 0) return cb("Not logged in / not correct role.");
-		updateLogin(socket.user.camper_id).catch(() => {return;});
+		updateLogin(socket.user.camper_id).catch(() => {
+			return;
+		});
 		try {
 			// get data about inventory item & verify quantity / active
 			let item = await new Promise((resolve, reject) => {
@@ -720,7 +751,9 @@ io.on('connection', (socket) => {
 				admin_slack_ids.forEach((admin) => {
 					if (user_sockets[admin.camper_id]) {
 						user_sockets[admin.camper_id].emit('alert', message);
-						updateLogin(admin.camper_id).catch(() => {return;});
+						updateLogin(admin.camper_id).catch(() => {
+							return;
+						});
 					}
 				});
 				await Promise.all(admin_slack_ids.map((slack_id) => {
@@ -738,7 +771,9 @@ io.on('connection', (socket) => {
 			} else { // specific alert for staffer
 				if (user_sockets[item.camper_id]) {
 					user_sockets[item.camper_id].emit('alert', message);
-					updateLogin(item.camper_id).catch(() => {return;});
+					updateLogin(item.camper_id).catch(() => {
+						return;
+					});
 				}
 				// look up staffer's slack ID & message them
 				let slack_id = await new Promise((resolve, reject) => {
@@ -768,7 +803,9 @@ io.on('connection', (socket) => {
 
 	socket.on('transfer', async (receiving_id, amount, message, cb) => {
 		if (!socket.user) return cb("Not logged in.");
-		updateLogin(socket.user.camper_id).catch(() => {return;});
+		updateLogin(socket.user.camper_id).catch(() => {
+			return;
+		});
 		amount = parseFloat(amount);
 		if (amount == "NaN") return cb("Not a valid amount.");
 		amount = roundTo(amount, 3);
@@ -811,7 +848,9 @@ io.on('connection', (socket) => {
 			socket.emit('balance', sending_bal == Infinity ? '∞' : sending_bal, -1);
 			if (user_sockets[receiving_id]) {
 				user_sockets[receiving_id].emit('balance', receiving_bal, 1);
-				updateLogin(receiving_id).catch((err) => { return; });	// if they received it then they don't get a notif later
+				updateLogin(receiving_id).catch((err) => {
+					return;
+				}); // if they received it then they don't get a notif later
 			}
 			return cb(null);
 		} catch (err) {

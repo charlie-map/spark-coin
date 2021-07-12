@@ -147,6 +147,20 @@ $(".raffle-inventory-select").click(function() {
 	pull_inventory("raffle");
 });
 
+$("#submit-sparks").click(function(event) {
+	event.preventDefault();
+
+	let receiving_id = $("#receiver_id_value").val();
+	let amount = $("#number_send_item").val();
+	let message = $("#message_send_item").val();
+	socket.emit('transfer', receiving_id, amount, message, (err) => {
+		if (err)
+			popout_alert(JSON.stringify(err).replace(/["]/g, ""));
+		else
+			popout_alert("Success!");
+	});
+});
+
 $(".icon-div").click(function() {
 	if ($(this).hasClass('open-inventory')) {
 		if ($(".inventory-popup").hasClass('open')) {
@@ -166,19 +180,6 @@ $(".icon-div").click(function() {
 		}
 		$(".send-item-popup").addClass('open');
 
-		$("#submit-sparks").click(function(event) {
-			event.preventDefault();
-
-			let receiving_id = $("#receiver_id_value").val();
-			let amount = $("#number_send_item").val();
-			let message = $("#message_send_item").val();
-			socket.emit('transfer', receiving_id, amount, message, (err) => {
-				if (err)
-					popout_alert(JSON.stringify(err));
-				else
-					popout_alert("Success!");
-			});
-		});
 	} else if ($(this).hasClass('camper-information')) {
 		if ($(".camper-information-popup").hasClass('open')) {
 			$(".camper-information-popup").removeClass('open');

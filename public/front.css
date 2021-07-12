@@ -408,6 +408,8 @@ input:invalid {
 
 .inner-inventory.non-admin {
 	display: block;
+	overflow-y: scroll;
+	max-height: calc(100% - 70px);
 }
 
 .inner-inventory > div.non-active {
@@ -1167,6 +1169,10 @@ input:invalid {
 }
 
 @media only screen and (max-width: 500px), screen and (max-height: 700px) {
+	#test-slider {
+		transform: scale(2%);
+	}
+
 	.send-item-popup {
 		position: absolute;
 		background: white;

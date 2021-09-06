@@ -1,11 +1,6 @@
 require('dotenv').config({
 	path: __dirname + "/.env"
 });
-const {
-	v4: uuidv4
-} = require('uuid');
-
-
 
 const axios = require('axios');
 const mustache = require('mustache-express');
@@ -13,58 +8,19 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const server = require('http').createServer(app);
-const signature = require('cookie-signature');
-
 const io = require('socket.io')(server);
-
-const session = require('express-session');
-const memorystore = require('memorystore')(session);
-
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
-
-const mysql = require('mysql2');
-
-const connection = mysql.createConnection({
-	host: process.env.HOST,
-	database: process.env.DATABASE,
-	user: process.env.USER_NAME,
-	password: process.env.PASSWORD,
-	insecureAuth: false
-});
-
-connection.connect((err) => {
-	if (err) throw err;
-});
+const {connection} = require('./config/db');
 
 app.use(express.static(__dirname + "/public"));
-
 app.set('views', __dirname + "/views");
 app.set('view engine', 'mustache');
 app.engine('mustache', mustache());
-
 app.use(bodyParser.urlencoded({
 	extended: false
 }));
-let sess_store = new memorystore({
-	checkPeriod: 86400000 / 2
-});
-let sess_secret = uuidv4()
-let sess = session({
-	cookie: {
-		maxAge: 86400000 / 2,
-		httpOnly: false
-	},
-	store: sess_store,
-	resave: false,
-	secure: false,
-	unset: 'destroy',
-	saveUninitialized: false,
-	name: 'sparks.sid',
-	sameSite: true,
-	secret: sess_secret
-});
-app.use(sess);
+
+const {initAuth, authSocket, LoginError, isLoggedIn, updateLogin} = require('./config/auth');
+initAuth(app);	// initialize session store and auth routes
 
 let user_sockets = {};
 let settings = {};
@@ -80,38 +36,6 @@ function roundTo(n, digits) {
 	var multiplicator = Math.pow(10, digits);
 	n = parseFloat((n * multiplicator).toFixed(11));
 	return Math.round(n) / multiplicator;
-}
-
-/* MIDDLEWARE */
-
-class LoginError extends Error {
-	constructor(message) {
-		super(message);
-		this.name = "LoginError";
-		this.login = 1;
-	}
-}
-
-function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
-	return (req, res, next) => {
-		if (!req.session || !req.session.user)
-			next(new LoginError());
-		else if (role && req.session.user.staffer != role)
-			next(new LoginError("You aren't allowed to do that!"));
-		else {
-			req.user = req.session.user;
-			next();
-		}
-	};
-}
-
-function updateLogin(camper_id) {
-	return new Promise((resolve, reject) => {
-		connection.query("UPDATE spark_user SET last_login = ? WHERE camper_id = ?;", [new Date(), camper_id], (err) => {
-			if (err) reject(err);
-			resolve();
-		});
-	});
 }
 
 /* SYSTEM ENDPOINTS */
@@ -445,26 +369,6 @@ app.post("/admin/connection-check", (req, res, next) => {
 	});
 });
 
-/* AUTHENTICATION ENDPOINTS */
-
-app.post("/login", (req, res, next) => {
-	// validate required info present
-	if (!req.body.camper_id || !req.body.pin)
-		return next(new LoginError("You need to provide both an ID and a PIN to log in."));
-	// check PIN against MySQL
-	connection.query('SELECT * FROM spark_user JOIN registration.camper ON spark_user.camper_id = registration.camper.id WHERE camper_id = ? AND pin = ?;', [req.body.camper_id, req.body.pin], (err, camper) => {
-		if (err) return next(err);
-		if (!camper || !camper[0]) return next(new LoginError("Incorrect ID or PIN."));
-		req.session.user = camper[0];
-		res.redirect("/");
-	});
-});
-
-app.get("/logout", (req, res) => {
-	req.session = null; // unset: destroy takes care of it
-	res.redirect("/");
-});
-
 /* ERROR HANDLING CHAIN */
 
 app.get("/txTest", isLoggedIn(2), (req, res, next) => {
@@ -559,29 +463,23 @@ function sendTxUpdates(camper_id, role) {
 }
 
 io.on('connection', (socket) => {
-	// parse cookie to associate user with this session
-	if (!(socket.client.conn.request.headers.cookie && socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid='))))
-		return socket.disconnect();
-	let sid = decodeURIComponent(socket.client.conn.request.headers.cookie.split('; ').find(row => row.startsWith('sparks.sid=')).split('=')[1]);
-	sid = signature.unsign(sid.substring(2), sess_secret);
-	if (!sid)
-		socket.disconnect();
-	else
-		sess_store.get(sid, (err, data) => {
-			socket.user = data.user;
-			user_sockets[data.user.camper_id] = socket;
-			// upon initial socket connection, deliver tx updates from before last socket pulse
-			sendTxUpdates(socket.user.camper_id, socket.user.staffer).then((result) => {
-				socket.emit('tx_update', result);
-				updateLogin(socket.user.camper_id).catch((err) => {
-					console.error(err);
-					return;
-				});
-			}).catch((err) => {
+	authSocket(socket).then((data) => {
+		socket.user = data.user;
+		user_sockets[data.user.camper_id] = socket;
+		// upon initial socket connection, deliver tx updates from before last socket pulse
+		sendTxUpdates(socket.user.camper_id, socket.user.staffer).then((result) => {
+			socket.emit('tx_update', result);
+			updateLogin(socket.user.camper_id).catch((err) => {
 				console.error(err);
 				return;
 			});
+		}).catch((err) => {
+			console.error(err);
+			return;
 		});
+	}).catch(() => {
+		socket.disconnect();
+	});
 
 	socket.on('disconnect', () => {
 		if (socket.user) delete user_sockets[socket.user.camper_id];

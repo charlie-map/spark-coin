@@ -10,14 +10,14 @@ CREATE TABLE settings (
 );
 
 CREATE TABLE city (
-	id INT NOT NULL,
+	id INT NOT NULL AUTO_INCREMENT,
 	name VARCHAR(255) NOT NULL,
 	raffle_active TINYINT DEFAULT 0,
 	PRIMARY KEY (id)
 );
 
 CREATE TABLE market (
-	id INT NOT NULL,
+	id INT NOT NULL AUTO_INCREMENT,
 	city_id INT NOT NULL,
 	name VARCHAR(255) NOT NULL,
 	icon TEXT,
@@ -30,17 +30,8 @@ CREATE TABLE market (
 	FOREIGN KEY (`city_id`) REFERENCES city (`id`) ON DELETE CASCADE
 );
 
-CREATE TABLE market_membership (
-	camper_id INT NOT NULL,
-	market_id INT NOT NULL,
-	staffer TINYINT NOT NULL,
-	camp_name VARCHAR(255),
-	FOREIGN KEY (`camper_id`) REFERENCES spark_user (`camper_id`) ON DELETE CASCADE,
-	FOREIGN KEY (`marker_id`) REFERENCES market (`id`) ON DELETE CASCADE
-);
-
 CREATE TABLE system (
-	id INT NOT NULL,
+	id INT NOT NULL AUTO_INCREMENT,
 	db_name VARCHAR(255),
 	name VARCHAR(255) NOT NULL,
 	system_type INT NOT NULL,
@@ -51,7 +42,7 @@ CREATE TABLE system (
 );
 
 CREATE TABLE spark_user (
-	camper_id INT NOT NULL UNIQUE,
+	camper_id INT NOT NULL UNIQUE AUTO_INCREMENT,
 	email VARCHAR(255) NOT NULL UNIQUE,
 	first_name VARCHAR(255) NOT NULL,
 	last_name VARCHAR(255) NOT NULL,
@@ -62,8 +53,17 @@ CREATE TABLE spark_user (
 	PRIMARY KEY (camper_id)
 );
 
+CREATE TABLE market_membership (
+	camper_id INT NOT NULL,
+	market_id INT NOT NULL,
+	staffer TINYINT NOT NULL,
+	camp_name VARCHAR(255),
+	FOREIGN KEY (`camper_id`) REFERENCES spark_user (`camper_id`) ON DELETE CASCADE,
+	FOREIGN KEY (`market_id`) REFERENCES market (`id`) ON DELETE CASCADE
+);
+
 CREATE TABLE inventory (
-	id INT AUTO_INCREMENT NOT NULL,
+	id INT NOT NULL AUTO_INCREMENT,
 	market_id INT,
 	city_id INT,
 	camper_id INT,
@@ -80,7 +80,7 @@ CREATE TABLE inventory (
 );
 
 CREATE TABLE raffle_item (
-	id INT AUTO_INCREMENT NOT NULL,
+	id INT NOT NULL AUTO_INCREMENT,
 	market_id INT,
 	city_id INT,
 	item_name VARCHAR(255) NOT NULL,

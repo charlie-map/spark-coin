@@ -35,13 +35,19 @@ class LoginError extends Error {
 
 function isLoggedIn(role) { // role levels: 0 = camper; 1 = staffer; 2 = admin
 	return (req, res, next) => {
-		if (!req.session || !req.session.user)
+		if (!req.session.camper_id || !req.session.market)
 			next(new LoginError());
-		else if (role && req.session.user.staffer != role)
-			next(new LoginError("You aren't allowed to do that!"));
 		else {
-			req.user = req.session.user;
-			next();
+			deserializeUser(req.session).then((user) => {
+				// after user data is gathered, verify that role is correct in current market
+				req.user = user;
+				if (role && req.user.staffer != role)
+					next(new LoginError("You aren't allowed to do that!"));
+				else
+					next();
+			}).catch((err) => {
+				next(new LoginError(err));
+			});
 		}
 	};
 }
@@ -51,6 +57,22 @@ function updateLogin(camper_id) {
 		connection.query("UPDATE spark_user SET last_login = ? WHERE camper_id = ?;", [new Date(), camper_id], (err) => {
 			if (err) reject(err);
 			resolve();
+		});
+	});
+}
+
+function deserializeUser(user_obj) {
+	return new Promise((resolve, reject) => {
+		let deserialized = {};
+		connection.query("SELECT * FROM spark_user WHERE camper_id = ?;", [user_obj.camper_id], (err, user) => {
+			if (err || !user || !user[0]) return reject("No user found!");
+			deserialized = user[0];
+			connection.query("SELECT market.id as market_id, name, icon, staffer, camp_name FROM market_membership LEFT JOIN market ON market_membership.market_id = market.id WHERE camper_id = ? AND market.disabled = 0 ORDER BY staffer ASC;", [user_obj.camper_id], (err, markets) => {
+				if (err || !markets) return reject(err ? err : "You are not a participant in any currently active market.");
+				deserialized.markets = markets.reduce((result, item) => { result[item.market_id] = item; return result; }, {});
+				deserialized.staffer = deserialized.markets[user_obj.market].staffer;
+				return resolve(deserialized);
+			});
 		});
 	});
 }
@@ -78,16 +100,25 @@ module.exports = {
 
 		/* AUTHENTICATION ROUTES */
 
+		app.post("/login/external", (req, res, next) => {
+			// TODO
+			// -> Specify "System"
+			// -> Loop cookies through System specs to find match
+			// -> Match found user against known user base
+			// -> Potentially trigger automatic registration
+		});
+
 		app.post("/login", (req, res, next) => {
 			// validate required info present
 			if (!req.body.camper_id || !req.body.pin)
 				return next(new LoginError("You need to provide both an ID and a PIN to log in."));
 			// check PIN against MySQL
-			connection.query('SELECT * FROM spark_user JOIN registration.camper ON spark_user.camper_id = registration.camper.id WHERE camper_id = ? AND pin = ?;', [req.body.camper_id, req.body.pin], (err, camper) => {
+			connection.query('SELECT spark_user.camper_id AS camper_id, market_id FROM spark_user LEFT JOIN market_membership ON market_membership.camper_id = spark_user.camper_id WHERE spark_user.camper_id = ? AND pin = ? ORDER BY staffer ASC LIMIT 1;', [req.body.camper_id, req.body.pin], (err, camper) => {
 				if (err) return next(err);
 				if (!camper || !camper[0]) return next(new LoginError("Incorrect ID or PIN."));
-				req.session.user = camper[0];
-				res.redirect("/");
+				req.session.camper_id = camper[0].camper_id;
+				req.session.market = camper[0].market_id;
+				return res.redirect("/");
 			});
 		});
 
@@ -108,7 +139,11 @@ module.exports = {
 				return reject();
 			else
 				sessionStore.get(sid, (err, data) => {
-					return resolve(data);
+					deserializeUser(data).then((deserialized) => {
+						return resolve(deserialized);
+					}).catch((err) => {
+						return reject(err);
+					});
 				});
 		});
 

@@ -41,29 +41,46 @@ function roundTo(n, digits) {
 /* SYSTEM ENDPOINTS */
 
 app.get("/", isLoggedIn(), (req, res, next) => {
-	if (req.user.staffer == 2) {
+	let staffer = req.user.staffer;
+	if (staffer == 2) {
 		// render admin page
 		return res.render("admin_home", {
 			BALANCE: '∞'
 		});
 	}
-	connection.query("SELECT balance, slack_id IS NULL as needs_slack FROM spark_user WHERE camper_id = ?;", [req.user.camper_id], (err, result) => {
-		if (err || !result) return next(new Error('Database error.'));
-		req.user.balance = result[0].balance;
-		if (req.user.staffer == 1)
-			res.render("staff_home", {
-				BALANCE: req.user.balance,
-				NEEDSLACK: result[0].needs_slack ? "open" : ""
-			});
-		else {
-			if (!closed_camper_view)
-				res.render("home", {
-					BALANCE: req.user.balance
-				});
-			else
-				res.sendFile(__dirname + "/views/offline.html");
-		}
+	// fix market object for rendering
+	let markets = Object.keys(req.user.markets).map((market_id) => {
+		let obj = {};
+		obj.market_id = market_id;
+		if (req.session.market == market_id) obj.active = true;
+		obj.market_name = req.user.markets[market_id].name;
+		obj.icon = req.user.markets[market_id].icon;
+		obj.role = req.user.markets[market_id].staffer;
+		if (req.session.camp_name) obj.camp_name = req.user.markets[market_id].camp_name;
+		return obj;
 	});
+	if (staffer == 1)
+		res.render("staff_home", {
+			BALANCE: req.user.balance,
+			NEEDSLACK: !req.user.slack_id ? "open" : "",
+			MARKETS: markets
+		});
+	else {
+		if (!closed_camper_view)
+			res.render("home", {
+				BALANCE: req.user.balance,
+				MARKETS: markets
+			});
+		else
+			res.sendFile(__dirname + "/views/offline.html");
+	}
+});
+
+app.post("/changeMarket", isLoggedIn(), (req, res, next) => {
+	if (!req.body.market_id) return next(new Error('Required field missing.'));
+	if (!req.user.markets[req.body.market_id]) return next(new Error('No access to requested market.'));
+	req.session.market = req.body.market_id;
+	res.redirect("/");
 });
 
 app.get("/raffle", isLoggedIn(), (req, res) => {
@@ -464,7 +481,7 @@ function sendTxUpdates(camper_id, role) {
 
 io.on('connection', (socket) => {
 	authSocket(socket).then((data) => {
-		socket.user = data.user;
+		socket.user = data;
 		user_sockets[data.user.camper_id] = socket;
 		// upon initial socket connection, deliver tx updates from before last socket pulse
 		sendTxUpdates(socket.user.camper_id, socket.user.staffer).then((result) => {

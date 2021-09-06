@@ -815,14 +815,14 @@ io.on('connection', (socket) => {
 			// get/verify amounts
 			let sending_bal = socket.user.staffer == 2 ? Infinity : await new Promise((resolve, reject) => {
 				connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [socket.user.camper_id], (err, result) => {
-					if (err || !result) reject("Receiving camper does not exist.");
+					if (err || !result || !result[0]) reject("Sending camper does not exist.");
 					if (result[0].balance < amount) reject("Not enough Sparks.");
 					resolve(result[0].balance);
 				});
 			});
 			let receiving_bal = await new Promise((resolve, reject) => {
 				connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [receiving_id], (err, result) => {
-					if (err || !result) reject(err);
+					if (err || !result || !result[0]) reject("Receiving camper does not exist.");
 					resolve(result[0].balance);
 				});
 			});

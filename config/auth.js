@@ -67,7 +67,7 @@ module.exports = {
 			},
 			store: sessionStore,
 			resave: false,
-			secure: false,
+			secure: process.env.PRODUCTION,
 			unset: 'destroy',
 			saveUninitialized: false,
 			name: process.env.COOKIE_NAME,

@@ -68,9 +68,10 @@ function deserializeUser(user_obj) {
 			if (err || !user || !user[0]) return reject("No user found!");
 			deserialized = user[0];
 			connection.query("SELECT market.id as market_id, name, icon, staffer, camp_name FROM market_membership LEFT JOIN market ON market_membership.market_id = market.id WHERE camper_id = ? AND market.disabled = 0 ORDER BY staffer ASC;", [user_obj.camper_id], (err, markets) => {
-				if (err || !markets) return reject(err ? err : "You are not a participant in any currently active market.");
+				if (err || !markets) return reject(err ? err : "You are not a participant in any currently active Spark market.");
 				deserialized.markets = markets.reduce((result, item) => { result[item.market_id] = item; return result; }, {});
 				deserialized.staffer = deserialized.markets[user_obj.market].staffer;
+				deserialized.market = user_obj.market;
 				return resolve(deserialized);
 			});
 		});
@@ -116,6 +117,7 @@ module.exports = {
 			connection.query('SELECT spark_user.camper_id AS camper_id, market_id FROM spark_user LEFT JOIN market_membership ON market_membership.camper_id = spark_user.camper_id WHERE spark_user.camper_id = ? AND pin = ? ORDER BY staffer ASC LIMIT 1;', [req.body.camper_id, req.body.pin], (err, camper) => {
 				if (err) return next(err);
 				if (!camper || !camper[0]) return next(new LoginError("Incorrect ID or PIN."));
+				if (!camper[0].market_id) return next(new LoginError("You are not a participant in any currently active Spark market."));
 				req.session.camper_id = camper[0].camper_id;
 				req.session.market = camper[0].market_id;
 				return res.redirect("/");

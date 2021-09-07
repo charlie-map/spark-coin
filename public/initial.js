@@ -221,3 +221,251 @@ $(".logs-inventory").on("click", ".purchase-item-url", function() {
 $(".close-logs").click(function() {
 	$(".log-popup").removeClass("open");
 });
+
+/*
+                      _        _                        _    
+ _ __ ___   __ _ _ __| | _____| |_  __      _____  _ __| | __
+| '_ ` _ \ / _` | '__| |/ / _ \ __| \ \ /\ / / _ \| '__| |/ /
+| | | | | | (_| | |  |   <  __/ |_   \ V  V / (_) | |  |   < 
+|_| |_| |_|\__,_|_|  |_|\_\___|\__|   \_/\_/ \___/|_|  |_|\_\
+*/
+
+$(".market_select.active").click(function() {
+	if ($(".market-option-select").hasClass('open')) {
+		$(".market-option-select").removeClass('open');
+		return;
+	}
+
+	$(".market-option-select").children("ol").empty();
+
+	// grab any available markets to display:
+	let available_markets = $(this).siblings("div");
+
+	//animate__backInLeft
+	// add each of them (including itself into a sub div display)
+	let market_text = `
+		<li id=${$(this).attr('attr-valueMarketID')}>
+			<div class="market-option drop-down">
+				<img src="${$(this).children("img").attr("src")}">
+				<div class="fact-data">
+					<p>${$(this).attr('attr-valueMarketName')}</p>
+					<p>Role -- ${$(this).attr('attr-valueRole') == "2" ?
+						"merchant" : $(this).attr('attr-valueRole') == "1" ?
+						"trader" : "buyer"}</p>
+				</div>
+			</div>
+		</li>`;
+
+	$(".market-option-select").children("ol").append(market_text);
+
+	$(".market-option-select").addClass('open');
+
+	setTimeout(function() {
+		for (let add_marks = 0; add_marks < $(available_markets).length; add_marks++) {
+			market_text = `
+			<li id=${$(available_markets[add_marks]).attr('attr-valueMarketID')}>
+				<div class="market-option" id="market_grab${add_marks}">
+					<img src="${$(available_markets[add_marks]).children("img").attr("src")}">
+					<div class="fact-data">
+						<p>${$(available_markets[add_marks]).attr('attr-valueMarketName')}</p>
+						<p>Role -- ${$(available_markets[add_marks]).attr('attr-valueRole') == "2" ?
+						"merchant" : $(available_markets[add_marks]).attr('attr-valueRole') == "1" ?
+						"trader" : "buyer"}</p>
+					</div>
+				</div>
+			</li>`;
+
+			$(".market-option-select").children("ol").append(market_text);
+			setTimeout(function() {
+				$("#market_grab" + add_marks).addClass('drop-down');
+			}, 150);
+		}
+	}, 700);
+});
+
+function popout_alert(message) {
+	$(".message-alert").children("h1").text(message);
+
+	$(".message-background").addClass('open');
+	$(".message-alert").addClass('open');
+
+	setTimeout(function() {
+		$(".message-background").removeClass('open');
+		$(".message-alert").removeClass('open');
+	}, 3500);
+}
+
+$(".market-option-select ol").on("click", "li", function() {
+	$.ajax({
+		type: "POST",
+		url: "/changeMarket",
+		data: {
+			market_id: $(this).attr('id')
+		},
+		success: function() {
+			location.reload();
+		},
+		error: function(error) {
+			popout_alert(error);
+		}
+	});
+});
+
+/*
+ _        _      
+| |_ _ __(_) ___ 
+| __| '__| |/ _ \
+| |_| |  | |  __/
+ \__|_|  |_|\___|
+                 
+*/
+let trie_letters = {
+	value: "null",
+	load: 0,
+	child: []
+};
+let trie_words = {
+	load: 0,
+	child: []
+};
+
+/*
+	insert:
+		input:
+			- trie:
+				the found try which will be used for insertion
+			- letter_array:
+				either words which will build off each other
+				or letters which will do the same
+		program:
+			splices first item in letter_array and finds
+			the location inside the trie then repeats
+		output:
+			- updated trie with new values and loads added
+*/
+function insert(trie, letter_array) {
+	if (!letter_array.length)
+		return trie;
+
+	let first_item = letter_array.splice(0, 1)[0];
+
+	let find_item;
+	for (find_item = 0; find_item < trie.child.length; find_item++)
+		if (trie.child[find_item].value == first_item)
+			break;
+
+	if (find_item == trie.child.length)
+		// need to add a new item to the trie
+		trie.child.push({
+			value: first_item,
+			load: !letter_array.length ? 1 : 0,
+			child: []
+		});
+	else
+		trie.child[find_item].load += !letter_array.length ? 1 : 0;
+
+	return insert(trie.child[find_item], letter_array);
+}
+
+/*
+	suggest:
+		input:
+			- trie:
+				the tree to pull from when looking for suggestions
+			- word:
+				the current word from the user (array)
+		program:
+			finds the DIRECT path (no edit_distances) to users
+			and then finds the best suggestions of that sub_path
+		output:
+			an array of suggestions
+*/
+
+function suggest(trie, word, accum) {
+	if (!trie.child.length)
+		return [{
+			value: accum,
+			load: trie.load
+		}];
+
+	let find_tr;
+	// continue running normally until the word runs out:
+	if (word.length) {
+		let first_item = word.splice(0, 1)[0];
+
+		for (find_tr = 0; find_tr < trie.child.length; find_tr++)
+			if (trie.child[find_tr].value == first_item) break;
+
+		return find_tr == trie.child.length ?
+			"No suggestions" : suggest(trie.child[find_tr], word, (accum ? accum : "") + first_item);
+	} else {
+		let suggestion = [];
+
+		for (find_tr = 0; find_tr < trie.child.length; find_tr++) {
+			let suggests = suggest(trie.child[find_tr], word, accum + (trie.child[find_tr].value.length > 1 ? " " : "") + trie.child[find_tr].value);
+
+			suggests.forEach(item => {
+				suggestion.push(item);
+			});
+		}
+
+		return suggestion;
+	}
+}
+
+let send_current_marketID;
+
+// socket.emit('get_people', function(info) {
+// 	send_current_marketID = info.market_id;
+
+// 	// insert info into tries:
+// 	let users = info.users;
+// 	users.forEach((info, index) => {
+// 		// first_name and last_name by letters:
+// 		insert(trie_letters, info.first_name.split(""));
+// 		insert(trie_letters, info.last_name.split(""));
+
+// 		// insert regular first_name, last_name:
+// 		insert(trie_words, [info.first_name, info.last_name]);
+// 		// adding a load to separate the start of
+// 		// first_names versus start of last_names:
+// 		trie_words.load = trie_words.child.length;
+// 		// then add revers last_name, first_name:
+// 		insert(trie_words, [info.last_name, info.first_name]);
+// 	});
+// });
+
+insert(trie_letters, "Charlie".split(""));
+insert(trie_letters, "Parrish".split(""));
+insert(trie_letters, "Charlie".split(""));
+insert(trie_letters, "Hall".split(""));
+insert(trie_letters, "Hall".split(""));
+insert(trie_letters, "Hair".split(""));
+insert(trie_letters, "Charlie".split(""));
+
+insert(trie_words, ["Charlie", "Hall"]);
+insert(trie_words, ["Charlie", "Parrish"]);
+trie_words.load = trie_words.child.length;
+insert(trie_words, ["Hall", "Charlie"]);
+
+// now watch for receiver id typing receiver_id_value
+$("#receiver_id_value").keyup(function() {
+	let look_for = $("#receiver_id_value").val();
+
+	if (!look_for.length) return;
+
+	let names = [], sub_words = look_for.split(" ");
+	console.log(sub_words);
+	for (let grab_options = 0; grab_options < sub_words.length; grab_options++) {
+		if (!sub_words[grab_options].length) continue;
+		names = [...names, ...suggest(trie_letters, sub_words[grab_options].split(""))];
+	}
+
+	console.log(names);
+
+	// using first names, then offer suggestions
+	// for (let suggestions = 0; suggestions < names.length; suggestions++) {
+	// 	console.log(names[suggestions]);
+	// 	console.log(suggest(trie_words, [names[suggestions].value]));
+	// }
+});

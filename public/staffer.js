@@ -398,3 +398,80 @@ $("#submit-new-slack-id").click(function(event) {
 		}
 	});
 });
+
+/*
+                      _        _                        _    
+ _ __ ___   __ _ _ __| | _____| |_  __      _____  _ __| | __
+| '_ ` _ \ / _` | '__| |/ / _ \ __| \ \ /\ / / _ \| '__| |/ /
+| | | | | | (_| | |  |   <  __/ |_   \ V  V / (_) | |  |   < 
+|_| |_| |_|\__,_|_|  |_|\_\___|\__|   \_/\_/ \___/|_|  |_|\_\
+*/
+
+$(".market_select.active").click(function() {
+	if ($(".market-option-select").hasClass('open')) {
+		$(".market-option-select").removeClass('open');
+		return;
+	}
+
+	$(".market-option-select").children("ol").empty();
+
+	// grab any available markets to display:
+	let available_markets = $(this).siblings("div");
+
+	//animate__backInLeft
+	// add each of them (including itself into a sub div display)
+	let market_text = `
+		<li id=${$(this).attr('attr-valueMarketID')}>
+			<div class="market-option drop-down">
+				<img src="${$(this).children("img").attr("src")}">
+				<div class="fact-data">
+					<p>${$(this).attr('attr-valueMarketName')}</p>
+					<p>Role -- ${$(this).attr('attr-valueRole') == "2" ?
+						"merchant" : $(this).attr('attr-valueRole') == "1" ?
+						"trader" : "buyer"}</p>
+				</div>
+			</div>
+		</li>`;
+
+	$(".market-option-select").children("ol").append(market_text);
+
+	$(".market-option-select").addClass('open');
+
+	setTimeout(function() {
+		for (let add_marks = 0; add_marks < $(available_markets).length; add_marks++) {
+			market_text = `
+			<li id=${$(available_markets[add_marks]).attr('attr-valueMarketID')}>
+				<div class="market-option" id="market_grab${add_marks}">
+					<img src="${$(available_markets[add_marks]).children("img").attr("src")}">
+					<div class="fact-data">
+						<p>${$(available_markets[add_marks]).attr('attr-valueMarketName')}</p>
+						<p>Role -- ${$(available_markets[add_marks]).attr('attr-valueRole') == "2" ?
+						"merchant" : $(available_markets[add_marks]).attr('attr-valueRole') == "1" ?
+						"trader" : "buyer"}</p>
+					</div>
+				</div>
+			</li>`;
+
+			$(".market-option-select").children("ol").append(market_text);
+			setTimeout(function() {
+				$("#market_grab" + add_marks).addClass('drop-down');
+			}, 150);
+		}
+	}, 700);
+});
+
+$(".market-option-select ol").on("click", "li", function() {
+	$.ajax({
+		type: "POST",
+		url: "/changeMarket",
+		data: {
+			market_id: $(this).attr('id')
+		},
+		success: function() {
+			location.reload();
+		},
+		error: function(error) {
+			popout_alert(error);
+		}
+	});
+});

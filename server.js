@@ -573,10 +573,14 @@ io.on('connection', (socket) => {
 		});
 		// if raffle, send raffle items instead
 		let query_string;
-		if (settings.raffle)
-			query_string = "SELECT id, item_name, description, image_url, 'RAFFLE' AS owner, 1 as price FROM raffle_item WHERE active = 1;";
+		if (socket.user.markets[socket.user.market].raffle_active_market && socket.user.markets[socket.user.market].raffle_active_city)
+			query_string = "SELECT id, item_name, description, image_url, CONCAT(IF(city_id IS NULL, '${socket.user.markets[socket.user.market].name}', '${socket.user.markets[socket.user.market].city_name}'), ' RAFFLE') AS owner, 1 as price FROM raffle_item WHERE active = 1 AND (market_id = ${socket.user.market} OR city_id = ${socket.user.markets[socket.user.market].city_id});";
+		else if (socket.user.markets[socket.user.market].raffle_active_market)	//market-only raffle
+			query_string = "SELECT id, item_name, description, image_url, '${socket.user.markets[socket.user.market].name} RAFFLE' AS owner, 1 as price FROM raffle_item WHERE active = 1 AND market_id = ${socket.user.market};";
+		else if (socket.user.markets[socket.user.market].raffle_active_city)	//city-only raffle
+			query_string = "SELECT id, item_name, description, image_url, '${socket.user.markets[socket.user.market].city_name} RAFFLE' AS owner, 1 as price FROM raffle_item WHERE active = 1 AND city_id = ${socket.user.markets[socket.user.market].city_id};";
 		else
-			query_string = "SELECT inventory.id, item_name, description, image_url, COALESCE(camp_name, CONCAT(registration.camper.first_name, ' ', registration.camper.last_name)) AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id LEFT JOIN registration.camper ON inventory.camper_id = registration.camper.id WHERE active = 1 AND quantity > 0;"
+			query_string = "SELECT inventory.id, item_name, description, image_url, COALESCE(camp_name, CONCAT(first_name, ' ', last_name)) AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id LEFT JOIN market_membership ON inventory.camper_id = market_membership.camper_id WHERE active = 1 AND quantity > 0 AND market_id = ${};"
 		// filter out no quantity items & only active items
 		connection.query(query_string, (err, result) => {
 			if (err || !result) cb([]);

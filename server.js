@@ -20,6 +20,7 @@ app.use(bodyParser.urlencoded({
 }));
 
 const {initAuth, authSocket, LoginError, isLoggedIn, updateLogin} = require('./config/auth');
+const session = require('express-session');
 initAuth(app);	// initialize session store and auth routes
 
 let user_sockets = {};
@@ -771,6 +772,25 @@ io.on('connection', (socket) => {
 		} catch (err) {
 			return cb(err);
 		}
+	});
+
+	socket.on('get_people', async (cb) => {
+		// get all people in this city
+		connection.query("SELECT spark_user.camper_id, first_name, last_name, GROUP_CONCAT(COALESCE(camp_name, 'NULL') SEPARATOR '||') AS camp_names, GROUP_CONCAT(market_id SEPARATOR '||') AS markets FROM spark_user CROSS JOIN market_membership ON spark_user.camper_id = market_membership.camper_id LEFT JOIN market ON market_membership.market_id = market.id WHERE market.city_id = ? GROUP BY spark_user.camper_id;", [socket.user.markets[socket.user.market].city_id], (err, users) => {
+			if (err || !users || !users.length) return res.end();
+
+			// return object: {market_id: <user's current market ID>, users: [{ camper_id, first_name, last_name, camp_name (in this market, null if not), markets: [ <int> market_ids ... ] } ... ]}
+			// users ordered by first_name DESC, last_name DESC (no regard to which markets they are in)
+			users = users.map((user) => {
+				user.markets = user.markets.split('||').map((x) => { return { id: parseInt(x, 10) }; });
+				user.camp_names.split('||').forEach((camp_name, index) => {
+					user.markets[index].camp_name = camp_name == "NULL" ? undefined : camp_name;
+				});
+				user.camp_names = undefined;
+				return user;
+			});
+			return res.json(users);
+		});
 	});
 });
 

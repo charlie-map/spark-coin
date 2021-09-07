@@ -59,7 +59,8 @@ CREATE TABLE market_membership (
 	staffer TINYINT NOT NULL,
 	camp_name VARCHAR(255),
 	FOREIGN KEY (`camper_id`) REFERENCES spark_user (`camper_id`) ON DELETE CASCADE,
-	FOREIGN KEY (`market_id`) REFERENCES market (`id`) ON DELETE CASCADE
+	FOREIGN KEY (`market_id`) REFERENCES market (`id`) ON DELETE CASCADE,
+	UNIQUE(camper_id, market_id)
 );
 
 CREATE TABLE inventory (

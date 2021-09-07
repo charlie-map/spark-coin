@@ -20,5 +20,5 @@ INSERT INTO market_membership(camper_id, market_id, staffer, camp_name) VALUES (
 INSERT INTO market_membership(camper_id, market_id, staffer, camp_name) VALUES (3, 1, 2, "Head1");
 INSERT INTO market_membership(camper_id, market_id, staffer, camp_name) VALUES (3, 2, 2, "Head2");
 
-INSERT INTO market_membership(camper_id, market_id, staffer, camp_name) VALUES (3, 1, 1, "Boy");
-INSERT INTO market_membership(camper_id, market_id, staffer) VALUES (3, 2, 1);
+INSERT INTO market_membership(camper_id, market_id, staffer, camp_name) VALUES (4, 1, 1, "Boy");
+INSERT INTO market_membership(camper_id, market_id, staffer) VALUES (4, 2, 1);

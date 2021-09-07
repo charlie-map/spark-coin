@@ -343,9 +343,11 @@ let trie_words = {
 		output:
 			- updated trie with new values and loads added
 */
-function insert(trie, letter_array) {
-	if (!letter_array.length)
+function insert(trie, letter_array, ender) {
+	if (!letter_array.length) {
+		trie.names = ender;
 		return trie;
+	}
 
 	let first_item = letter_array.splice(0, 1)[0];
 
@@ -364,7 +366,7 @@ function insert(trie, letter_array) {
 	else
 		trie.child[find_item].load += !letter_array.length ? 1 : 0;
 
-	return insert(trie.child[find_item], letter_array);
+	return insert(trie.child[find_item], letter_array, ender);
 }
 
 /*
@@ -385,7 +387,8 @@ function suggest(trie, word, accum) {
 	if (!trie.child.length)
 		return [{
 			value: accum,
-			load: trie.load
+			load: trie.load,
+			name_dir: trie.names
 		}];
 
 	let find_tr;
@@ -415,57 +418,139 @@ function suggest(trie, word, accum) {
 
 let send_current_marketID;
 
-// socket.emit('get_people', function(info) {
-// 	send_current_marketID = info.market_id;
+socket.emit('get_people', function(info) {
+	send_current_marketID = info.market_id;
 
-// 	// insert info into tries:
-// 	let users = info.users;
-// 	users.forEach((info, index) => {
-// 		// first_name and last_name by letters:
-// 		insert(trie_letters, info.first_name.split(""));
-// 		insert(trie_letters, info.last_name.split(""));
+	// insert info into tries:
+	let users = info.users;
+	users.forEach((info, index) => {
+		// need to decide on if there's a camp name and which one to use:
+		let camp_name;
+		info.markets.forEach(item => {
+			if (item.market_id == send_current_marketID)
+				camp_name = item.camp_name;
+		});
+		// first_name and last_name by letters:
+		insert(trie_letters, camp_name ? camp_name.split("") : info.first_name.split(""));
+		if (!camp_name) insert(trie_letters, info.last_name.split(""));
 
-// 		// insert regular first_name, last_name:
-// 		insert(trie_words, [info.first_name, info.last_name]);
-// 		// adding a load to separate the start of
-// 		// first_names versus start of last_names:
-// 		trie_words.load = trie_words.child.length;
-// 		// then add revers last_name, first_name:
-// 		insert(trie_words, [info.last_name, info.first_name]);
-// 	});
-// });
+		// insert regular first_name, last_name:
+		insert(trie_words, camp_name ? [camp_name] : [info.first_name, info.last_name]);
 
-insert(trie_letters, "Charlie".split(""));
-insert(trie_letters, "Parrish".split(""));
-insert(trie_letters, "Charlie".split(""));
-insert(trie_letters, "Hall".split(""));
-insert(trie_letters, "Hall".split(""));
-insert(trie_letters, "Hair".split(""));
-insert(trie_letters, "Charlie".split(""));
-
-insert(trie_words, ["Charlie", "Hall"]);
-insert(trie_words, ["Charlie", "Parrish"]);
-trie_words.load = trie_words.child.length;
-insert(trie_words, ["Hall", "Charlie"]);
+		// then add reverse last_name, first_name:
+		if (!camp_name) insert(trie_words, [info.last_name, info.first_name], info.first_name + "||reverse");
+	});
+});
 
 // now watch for receiver id typing receiver_id_value
 $("#receiver_id_value").keyup(function() {
-	let look_for = $("#receiver_id_value").val();
+	let look_for = $(this).val();
 
 	if (!look_for.length) return;
 
-	let names = [], sub_words = look_for.split(" ");
-	console.log(sub_words);
-	for (let grab_options = 0; grab_options < sub_words.length; grab_options++) {
-		if (!sub_words[grab_options].length) continue;
-		names = [...names, ...suggest(trie_letters, sub_words[grab_options].split(""))];
+	if (!trie_words.child.length || !trie_letters.child.length) {
+		$("#suggestor ol").empty();
+		$("#suggestor ol").append("<li>No suggestions</li>");
+		return;
 	}
 
-	console.log(names);
+	let names = [],
+		sub_words = look_for.split(" ");
+	for (let grab_options = 0; grab_options < sub_words.length; grab_options++) {
+		if (!sub_words[grab_options].length) continue;
+
+		let _new = suggest(trie_letters, sub_words[grab_options].split(""));
+		if (_new != "No suggestions")
+			names = [...names, ..._new];
+	}
 
 	// using first names, then offer suggestions
-	// for (let suggestions = 0; suggestions < names.length; suggestions++) {
-	// 	console.log(names[suggestions]);
-	// 	console.log(suggest(trie_words, [names[suggestions].value]));
-	// }
+	let full_suggests = [];
+	for (let suggestions = 0; suggestions < names.length; suggestions++) {
+		let __new = suggest(trie_words, [names[suggestions].value]);
+
+		console.log(__new);
+		if (__new != "No suggestions") {
+			for (let any_news = 0; any_news < __new.length; any_news++) {
+				if (__new[any_news].name_dir.split("||")[1] == "reverse") {
+					let split = __new[any_news].value.split(" ");
+					__new[any_news].value = split[1] + " " + split[0];
+				}
+			}
+
+			full_suggests = __new ? [...full_suggests, ...__new] : full_suggests;
+		}
+	}
+
+	suggestor_setup();
+
+	if (!full_suggests.length) {
+		// show "no suggestions";
+		$("#suggestor ol").empty();
+		$("#suggestor ol").append("<li>No suggestions</li>");
+		return;
+	}
+
+	partition(full_suggests, 0, full_suggests.length - 1);
+
+	$("#suggestor ol").empty();
+
+	for (let all_sugg = 0; all_sugg < full_suggests.length; all_sugg++) {
+		$("#suggestor ol").append(`
+			<li>${full_suggests[all_sugg].value}</li>
+		`);
+	}
 });
+
+function suggestor_setup() {
+	let position_offset = $("#receiver_id_value").offset();
+	$("#suggestor").css({
+		top: position_offset.top + 43,
+		left: position_offset.left - 25,
+		width: $("#receiver_id_value").outerWidth() + 50
+	});
+
+	$("#suggestor").addClass('open');
+}
+
+$("#receiver_id_value").focus(function() {
+	suggestor_setup();
+});
+
+$("#receiver_id_value").focusout(function() {
+	$("#suggestor").removeClass('open');
+});
+
+/*
+             _      _          
+  __ _ _   _(_) ___| | ___   _ 
+ / _` | | | | |/ __| |/ / | | |
+| (_| | |_| | | (__|   <| |_| |
+ \__, |\__,_|_|\___|_|\_\\__, |
+    |_|                  |___/ 
+*/
+function partition(array, low, high) {
+	if (low < high) {
+		let pivot = quicksort(array, low, high);
+		partition(array, pivot + 1, high); // top
+		partition(array, low, pivot - 1); // bottom
+	}
+}
+
+function quicksort(array, low, high) {
+	let lowest = low - 1,
+		buffer;
+	for (let j = low; j < high; j++) {
+		if (array[high].load < array[j].load) {
+			lowest++;
+			buffer = array[j];
+			array[j] = array[lowest];
+			array[lowest] = buffer;
+		}
+	}
+	lowest++;
+	buffer = array[lowest];
+	array[lowest] = array[high];
+	array[high] = buffer;
+	return lowest;
+}

@@ -445,9 +445,14 @@ input:invalid {
 
 #suggestor ol {
 	background-color: white;
+	height: 0;
 	padding: 0;
 	margin: 0;
 	margin-top: 5px;
+}
+
+#suggestor.open ol {
+	height: auto;
 }
 
 #suggestor ol li {

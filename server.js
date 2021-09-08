@@ -789,7 +789,7 @@ io.on('connection', (socket) => {
 				user.camp_names = undefined;
 				return user;
 			});
-			return cb(users);
+			return cb({market_id: socket.user.market, users: users});
 		});
 	});
 });

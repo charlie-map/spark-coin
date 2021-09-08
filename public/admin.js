@@ -899,7 +899,6 @@ $("#receiver_id_value").keyup(function() {
 	for (let suggestions = 0; suggestions < names.length; suggestions++) {
 		let __new = suggest(trie_words, [names[suggestions].value]);
 
-		console.log(__new);
 		if (__new != "No suggestions") {
 			for (let any_news = 0; any_news < __new.length; any_news++) {
 				if (__new[any_news].name_dir.split("||")[1] == "reverse") {

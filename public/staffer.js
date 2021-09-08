@@ -315,7 +315,6 @@ $("#submit-add-inventory-item").click(function(event) {
 			$("#item_image1").val("");
 		},
 		error: function(error) {
-			console.log(error.responseText);
 			popout_alert(error.responseText);
 		}
 	});
@@ -332,8 +331,6 @@ $(".watch-logs").click(function() {
 		all_logs.forEach(log => { // time for another object :D
 
 			let inventory_item;
-
-			console.log(log);
 
 			inventory_item = "<div>" +
 				"<div style='background-image: url(" + (log.image_url ? log.image_url : "https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d") + ")'" + "class='purchase-item-url spark-logo-inventory'></div>" +
@@ -365,7 +362,6 @@ $(".logs-inventory").on("click", ".purchase-item-url", function() {
 	if ($(this).siblings(".purchase-extra-info").hasClass('open')) {
 		$(this).siblings(".purchase-extra-info").removeClass('open');
 	} else {
-		console.log($(this).offset().top);
 		$(this).siblings(".purchase-extra-info").css("top", $(this).offset().top);
 		$(this).siblings(".purchase-extra-info").addClass('open');
 	}
@@ -634,7 +630,6 @@ $("#receiver_id_value").keyup(function() {
 	for (let suggestions = 0; suggestions < names.length; suggestions++) {
 		let __new = suggest(trie_words, [names[suggestions].value]);
 
-		console.log(__new);
 		if (__new != "No suggestions") {
 			for (let any_news = 0; any_news < __new.length; any_news++) {
 				if (__new[any_news].name_dir.split("||")[1] == "reverse") {

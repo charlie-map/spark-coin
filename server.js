@@ -442,6 +442,25 @@ app.get("/txTest", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
+app.get("/inventory_test", isLoggedIn(), (req, res, next) => {
+	// if raffle, send raffle items instead
+	let query_string;
+	if (req.user.markets[req.user.market].raffle_active_market && req.user.markets[req.user.market].raffle_active_city)
+		query_string = "SELECT id, item_name, description, image_url, CONCAT(IF(city_id IS NULL, '${req.user.markets[req.user.market].name}', '${req.user.markets[req.user.market].city_name}'), ' RAFFLE') AS owner, 1 as price FROM raffle_item WHERE active = 1 AND (market_id = ${req.user.market} OR city_id = ${req.user.markets[req.user.market].city_id});";
+	else if (req.user.markets[req.user.market].raffle_active_market)	//market-only raffle
+		query_string = "SELECT id, item_name, description, image_url, '${req.user.markets[req.user.market].name} RAFFLE' AS owner, 1 as price FROM raffle_item WHERE active = 1 AND market_id = ${req.user.market};";
+	else if (req.user.markets[req.user.market].raffle_active_city)	//city-only raffle
+		query_string = "SELECT id, item_name, description, image_url, '${req.user.markets[req.user.market].city_name} RAFFLE' AS owner, 1 as price FROM raffle_item WHERE active = 1 AND city_id = ${req.user.markets[req.user.market].city_id};";
+	else
+		query_string = `SELECT DISTINCT inventory.id, item_name, description, image_url, COALESCE(camp_name, CONCAT(first_name, ' ', last_name)) AS owner, price, inventory.city_id IS NOT NULL AS is_city FROM inventory INNER JOIN spark_user ON inventory.camper_id = spark_user.camper_id LEFT JOIN market_membership ON inventory.camper_id = market_membership.camper_id WHERE active = 1 AND quantity > 0 AND (inventory.market_id = ${req.user.market} OR inventory.city_id = ${req.user.markets[req.user.market].city_id});`
+	// filter out no quantity items & only active items
+	console.log(query_string);
+	connection.query(query_string, (err, result) => {
+		if (err || !result) return res.end('no');
+		return res.json(result);
+	});
+});
+
 app.use(function(err, req, res, next) { // handle all other thrown errors
 	if (err.login) // handle login errors
 		res.render("initial", err.message ? {
@@ -580,7 +599,7 @@ io.on('connection', (socket) => {
 		else if (socket.user.markets[socket.user.market].raffle_active_city)	//city-only raffle
 			query_string = "SELECT id, item_name, description, image_url, '${socket.user.markets[socket.user.market].city_name} RAFFLE' AS owner, 1 as price FROM raffle_item WHERE active = 1 AND city_id = ${socket.user.markets[socket.user.market].city_id};";
 		else
-			query_string = "SELECT inventory.id, item_name, description, image_url, COALESCE(camp_name, CONCAT(first_name, ' ', last_name)) AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id LEFT JOIN market_membership ON inventory.camper_id = market_membership.camper_id WHERE active = 1 AND quantity > 0 AND market_id = ${};"
+			query_string = "SELECT inventory.id, item_name, description, image_url, COALESCE(camp_name, CONCAT(first_name, ' ', last_name)) AS owner, price FROM inventory LEFT JOIN spark_user ON inventory.camper_id = spark_user.camper_id LEFT JOIN market_membership ON inventory.camper_id = market_membership.camper_id WHERE active = 1 AND quantity > 0 AND (inventory.market_id = ${session.user.market} OR inventory.city_id = ${session.user.markets[session.user.market].city_id});"
 		// filter out no quantity items & only active items
 		connection.query(query_string, (err, result) => {
 			if (err || !result) cb([]);

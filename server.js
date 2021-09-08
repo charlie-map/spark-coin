@@ -84,9 +84,7 @@ app.post("/changeMarket", isLoggedIn(), (req, res, next) => {
 	res.redirect("/");
 });
 
-app.get("/raffle", isLoggedIn(), (req, res) => {
-	res.end("" + settings.raffle);
-});
+// TODO: RECONSIDER AND/OR REWORK
 
 app.post("/close-sparks", (req, res) => {
 	connection.query("SELECT value FROM settings WHERE name='block_camper'", (err, uuid_value) => {
@@ -103,6 +101,8 @@ app.post("/close-sparks", (req, res) => {
 });
 
 /* STAFFER ENDPOINTS */
+
+// TODO: INVENTORY REWORK
 
 app.get("/inventory", isLoggedIn(1), (req, res) => {
 	connection.query("SELECT * FROM inventory LEFT JOIN tx ON inventory.id = tx.inventory_item WHERE camper_id = ?;", [req.user.id], (err, result) => {
@@ -127,6 +127,8 @@ app.delete("/inventory", isLoggedIn(1), (req, res) => {
 	});
 });
 
+// END TODO
+
 app.post("/slack", isLoggedIn(1), (req, res, next) => {
 	if (!req.body.slack_id) return next(new Error('Required field missing'));
 	connection.query("UPDATE spark_user SET slack_id = ? WHERE camper_id = ?;", [req.body.slack_id, req.user.id], (err) => {
@@ -136,6 +138,8 @@ app.post("/slack", isLoggedIn(1), (req, res, next) => {
 });
 
 /* ADMIN ENDPOINTS */
+
+// TODO: SETTINGS REWORK
 
 app.get("/admin/setting", isLoggedIn(2), (req, res, next) => {
 	connection.query("SELECT * FROM settings;", (err, result) => {
@@ -152,6 +156,10 @@ app.post("/admin/setting", isLoggedIn(2), (req, res, next) => {
 		res.end();
 	});
 });
+
+// END TODO
+
+// TODO: INVENTORY REWORK
 
 app.get("/admin/inventory", isLoggedIn(2), (req, res, next) => {
 	connection.query("SELECT * FROM inventory WHERE camper_id IS NULL;", (err, result) => {
@@ -184,7 +192,7 @@ app.delete("/admin/inventory", isLoggedIn(2), (req, res, next) => {
 });
 
 app.get("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
-	connection.query("SELECT * FROM raffle_item WHERE active = 1;", (err, result) => {
+	connection.query("SELECT r.id, r.item_name, r.description, r.image_url, r.active, r.market_id IS NOT NULL AS is_market_item, r.city_id IS NOT NULL AS is_city_item, CASE WHEN r.market_id IS NULL THEN c.name ELSE m.name END AS name, CASE WHEN r.market_id IS NULL THEN NULL ELSE m.icon END AS icon, CASE WHEN r.market_id IS NULL THEN c.id ELSE m.id END AS market_or_city_id FROM raffle_item r LEFT JOIN market m ON r.market_id IS NOT NULL AND r.market_id = m.id LEFT JOIN city c ON r.city_id IS NOT NULL AND r.city_id = c.id WHERE active = 1;", (err, result) => {
 		if (err) return next(err);
 		res.json(result);
 	});
@@ -206,6 +214,10 @@ app.delete("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
+// END TODO
+
+/* -- DEPRECATED --
+
 app.post("/admin/load", isLoggedIn(2), async (req, res, next) => {
 	if (!req.body.week_id) return next(new Error('Required field missing.'));
 	connection.query("SELECT * FROM registration.week WHERE id = ?;", [req.body.week_id], async (err, result) => {
@@ -226,7 +238,7 @@ app.post("/admin/load", isLoggedIn(2), async (req, res, next) => {
 			res.json(campers);
 		});
 	});
-});
+}); */
 
 app.post("/admin/reset", isLoggedIn(2), (req, res, next) => {
 	if (!req.body.camper_id) return next(new Error('Required field missing.'));
@@ -236,30 +248,37 @@ app.post("/admin/reset", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
+// CAMPER/USER ADMINISTRATION REWORK STATUS
+// CONSIDERATIONS:
+// -> When getting users, what info does frontend need to adequately partition by market/city and retain that info?
+// -> Do we need an endpoint to get campers w/camp names by market ID?
+// -> Do we need an endpoint to get campers w/camp names by city ID?
+// -> An admin in one market could potentially be a non-admin in another: this is a bad case. Does this matter? (e.g. an admin upgrade should affect all markets)
+
 app.get("/admin/campers", isLoggedIn(2), (req, res, next) => {
-	connection.query("SELECT spark_user.*, CONCAT(registration.camper.first_name, ' ', registration.camper.last_name) AS name FROM spark_user LEFT JOIN registration.camper ON spark_user.camper_id = registration.camper.id;", (err, result) => {
+	connection.query("SELECT spark_user.*, CONCAT(spark_user.first_name, ' ', spark_user.last_name) AS name FROM spark_user;", (err, result) => {
 		if (err) return next(err);
 		res.json(result);
 	});
 });
 
 app.post("/admin/campers/upgrade", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.camper_id || !req.body.role || !(req.body.role > -1 && req.body.role < 3)) return next(new Error('Required field missing.'));
-	connection.query("UDPATE spark_user SET staffer = ? WHERE camper_id = ?;", [req.body.role, req.body.camper_id], (err) => {
+	if (!req.body.camper_id || !req.body.role || !req.body.market_id || !(req.body.role > -1 && req.body.role < 3)) return next(new Error('Required field missing.'));
+	connection.query("UDPATE market_membership SET staffer = ? WHERE camper_id = ? AND market_id = ?;", [req.body.role, req.body.camper_id, req.body.market_id], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
 });
 
 app.post("/admin/campers/upgrade/pump", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.camper_id || !req.body.role || !(req.body.role == 1 || req.body.role == -1)) return next(new Error('Required field missing.'));
+	if (!req.body.camper_id || !req.body.role || !req.body.market_id || !(req.body.role == 1 || req.body.role == -1)) return next(new Error('Required field missing.'));
 	// check valid
 	req.body.camper_id = parseInt(req.body.camper_id, 10);
-	connection.query("SELECT staffer FROM spark_user WHERE camper_id = ?;", [req.body.camper_id], (err, result) => {
+	connection.query("SELECT staffer FROM market_membership WHERE camper_id = ? AND market_id = ?;", [req.body.camper_id, req.body.market_id], (err, result) => {
 		if (err || !result) return next(err);
 		let new_role = result[0].staffer + parseInt(req.body.role, 10);
 		if (new_role < 0 || new_role > 2) return next(new Error('Cannot pump camper that way.'));
-		connection.query("UPDATE spark_user SET staffer = ? WHERE camper_id = ?;", [new_role, req.body.camper_id], (err) => {
+		connection.query("UPDATE market_membership SET staffer = ? WHERE camper_id = ? AND market_id = ?;", [new_role, req.body.camper_id, req.body.market_id], (err) => {
 			if (err) return next(err);
 			res.end();
 		});
@@ -267,20 +286,22 @@ app.post("/admin/campers/upgrade/pump", isLoggedIn(2), (req, res, next) => {
 });
 
 app.post("/admin/campers/campname", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.camper_id || !req.body.camp_name) return next(new Error('Required field missing.'));
-	connection.query("UPDATE spark_user SET camp_name = ? WHERE camper_id = ?;", [req.body.camp_name, req.body.camper_id], (err) => {
+	if (!req.body.camper_id || !req.body.camp_name || !req.body.market_id) return next(new Error('Required field missing.'));
+	connection.query("UPDATE market_membership SET camp_name = ? WHERE camper_id = ? AND market_id = ?;", [req.body.camp_name, req.body.camper_id, req.body.market_id], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
 });
 
 app.get("admin/campers/campname", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.camper_id) return next(new Error('Required field missing.'));
-	connection.query("SELECT camp_name FROM spark_user WHERE camper_id = ?;", [req.body.camper_id], (err, result) => {
+	if (!req.body.camper_id || !req.body.market_id) return next(new Error('Required field missing.'));
+	connection.query("SELECT camp_name FROM market_membership WHERE camper_id = ? AND market_id = ?;", [req.body.camper_id, req.body.market_id], (err, result) => {
 		if (err || !result) return next(err);
 		res.end(result[0].camp_name);
 	});
-})
+});
+
+// TODO: RAFFLE REWORK
 
 app.get("/admin/raffle/value", isLoggedIn(2), (req, res, next) => {
 	res.end("" + settings.raffle);
@@ -347,6 +368,8 @@ app.get("/admin/raffle", isLoggedIn(2), async (req, res, next) => {
 		next(err);
 	}
 });
+
+// END TODO
 
 app.get("/admin/log/all", isLoggedIn(2), (req, res, next) => {
 	connection.query("SELECT * FROM tx ORDER BY tx_time DESC;", (err, result) => {

@@ -878,51 +878,89 @@ $("#receiver_id_value").keyup(function() {
 
 	if (!look_for.length) return;
 
+	$("#suggestor ol").empty();
+
 	if (!trie_words.child.length || !trie_letters.child.length) {
-		$("#suggestor ol").empty();
 		$("#suggestor ol").append("<li>No suggestions</li>");
 		return;
 	}
 
 	let names = [],
+		primary_suggests = [],
+		secondary_suggests = [],
 		sub_words = look_for.split(" ");
+	let finish_word = sub_words[sub_words.length - 1];
+	// looking at sub words:
+	// look at our options for each one:
+	if (sub_words.length > 1) {
+
+		for (let sub_word_opts = 0; sub_word_opts < sub_words.length - 1; sub_word_opts++) {
+			primary_suggests.push(...suggest(trie_words, [sub_words[sub_word_opts]]));
+		}
+	}
+
+	// now find names for the other portion of the word:
 	for (let grab_options = 0; grab_options < sub_words.length; grab_options++) {
 		if (!sub_words[grab_options].length) continue;
 
 		let _new = suggest(trie_letters, sub_words[grab_options].split(""));
+
+		// get rid of repeats in _new:
+		for (let new_check = 0; new_check < _new.length; new_check++)
+			if (names.map(item => {
+					return item.value == _new[new_check].value ? true : false
+				}).includes(true))
+				_new.splice(new_check, 1);
+
 		if (_new != "No suggestions")
 			names = [...names, ..._new];
 	}
 
-	// using first names, then offer suggestions
-	let full_suggests = [];
 	for (let suggestions = 0; suggestions < names.length; suggestions++) {
 		let __new = suggest(trie_words, [names[suggestions].value]);
 
+		// for secondaries, we need an EXACT match
 		if (__new != "No suggestions") {
 			for (let any_news = 0; any_news < __new.length; any_news++) {
-				if (__new[any_news].name_dir.split("||")[1] == "reverse") {
-					let split = __new[any_news].value.split(" ");
-					__new[any_news].value = split[1] + " " + split[0];
+				let split = __new[any_news].value.split(" ");
+				// only do this if the finish_word is the second word**
+				if (sub_words.length > 1 && split[0] != finish_word && split[1] != finish_word) {
+					__new.splice(any_news, 1);
+					continue;
 				}
+
+				if (__new[any_news].name_dir.split("||")[1] == "reverse")
+					__new[any_news].value = split[1] + " " + split[0];
 			}
 
-			full_suggests = __new ? [...full_suggests, ...__new] : full_suggests;
+			secondary_suggests = __new ? [...secondary_suggests, ...__new] : secondary_suggests;
 		}
 	}
+
+	// clean secondary_suggests to make sure there's no duplicates
+	for (let checks = 0; checks < primary_suggests.length; checks++) {
+		let indeces = secondary_suggests.map((item, index) => {return primary_suggests[checks].value == item.value ? index + 1 : -1});
+
+		let index = indeces.find(element => element >= 0);
+
+		if (index)
+			secondary_suggests.splice(index - 1, 1);
+	}
+
+	// new reconcile any differences between primary_suggests
+	// and secondary_suggests:
+	// add any items from either into a final item
+	let full_suggests = [...primary_suggests, ...secondary_suggests];
 
 	suggestor_setup();
 
 	if (!full_suggests.length) {
 		// show "no suggestions";
-		$("#suggestor ol").empty();
 		$("#suggestor ol").append("<li>No suggestions</li>");
 		return;
 	}
 
 	partition(full_suggests, 0, full_suggests.length - 1);
-
-	$("#suggestor ol").empty();
 
 	for (let all_sugg = 0; all_sugg < full_suggests.length; all_sugg++) {
 		$("#suggestor ol").append(`

@@ -212,7 +212,6 @@ $(".logs-inventory").on("click", ".purchase-item-url", function() {
 	if ($(this).siblings(".purchase-extra-info").hasClass('open')) {
 		$(this).siblings(".purchase-extra-info").removeClass('open');
 	} else {
-		console.log($(this).offset().top);
 		$(this).siblings(".purchase-extra-info").css("top", $(this).offset().top);
 		$(this).siblings(".purchase-extra-info").addClass('open');
 	}
@@ -482,10 +481,8 @@ $("#receiver_id_value").keyup(function() {
 			names = [...names, ..._new];
 	}
 
-	console.log(names);
 	for (let suggestions = 0; suggestions < names.length; suggestions++) {
 		let __new = suggest(trie_words, [names[suggestions].value]);
-		console.log(__new);
 
 		// for secondaries, we need an EXACT match
 		if (__new != "No suggestions") {
@@ -595,38 +592,3 @@ $("#suggestor ol").on('click', 'li', function() {
 
 	$("#receiver_id_value").focus();
 });
-
-/*
-for (let grab_options = 0; grab_options < sub_words.length; grab_options++) {
-		if (!sub_words[grab_options].length) continue;
-
-		let _new = suggest(trie_letters, sub_words[grab_options].split(""));
-
-		// get rid of repeats in _new:
-		for (let new_check = 0; new_check < _new.length; new_check++)
-			if (names.map(item => {return item.value == _new[new_check].value ? true : false}).includes(true))
-				_new.splice(new_check, 1);
-
-		if (_new != "No suggestions")
-			names = [...names, ..._new];
-	}
-
-	console.log(names);
-
-	// using first names, then offer suggestions
-	let full_suggests = [];
-	for (let suggestions = 0; suggestions < names.length; suggestions++) {
-		let __new = suggest(trie_words, [names[suggestions].value]);
-
-		if (__new != "No suggestions") {
-			for (let any_news = 0; any_news < __new.length; any_news++) {
-				if (__new[any_news].name_dir.split("||")[1] == "reverse") {
-					let split = __new[any_news].value.split(" ");
-					__new[any_news].value = split[1] + " " + split[0];
-				}
-			}
-
-			full_suggests = __new ? [...full_suggests, ...__new] : full_suggests;
-		}
-	}
-	*/

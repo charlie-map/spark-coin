@@ -483,7 +483,7 @@ function sendTxUpdates(camper_id, role) {
 io.on('connection', (socket) => {
 	authSocket(socket).then((data) => {
 		socket.user = data;
-		user_sockets[data.user.camper_id] = socket;
+		user_sockets[socket.user.camper_id] = socket;
 		// upon initial socket connection, deliver tx updates from before last socket pulse
 		sendTxUpdates(socket.user.camper_id, socket.user.staffer).then((result) => {
 			socket.emit('tx_update', result);
@@ -777,7 +777,7 @@ io.on('connection', (socket) => {
 	socket.on('get_people', async (cb) => {
 		// get all people in this city
 		connection.query("SELECT spark_user.camper_id, first_name, last_name, GROUP_CONCAT(COALESCE(camp_name, 'NULL') SEPARATOR '||') AS camp_names, GROUP_CONCAT(market_id SEPARATOR '||') AS markets FROM spark_user CROSS JOIN market_membership ON spark_user.camper_id = market_membership.camper_id LEFT JOIN market ON market_membership.market_id = market.id WHERE market.city_id = ? GROUP BY spark_user.camper_id;", [socket.user.markets[socket.user.market].city_id], (err, users) => {
-			if (err || !users || !users.length) return res.end();
+			if (err || !users || !users.length) return cb(null);
 
 			// return object: {market_id: <user's current market ID>, users: [{ camper_id, first_name, last_name, camp_name (in this market, null if not), markets: [ <int> market_ids ... ] } ... ]}
 			// users ordered by first_name DESC, last_name DESC (no regard to which markets they are in)
@@ -789,7 +789,7 @@ io.on('connection', (socket) => {
 				user.camp_names = undefined;
 				return user;
 			});
-			return res.json(users);
+			return cb(users);
 		});
 	});
 });

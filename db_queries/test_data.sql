@@ -23,6 +23,12 @@ INSERT INTO market_membership(camper_id, market_id, staffer, camp_name) VALUES (
 INSERT INTO market_membership(camper_id, market_id, staffer, camp_name) VALUES (4, 1, 1, "Boy");
 INSERT INTO market_membership(camper_id, market_id, staffer) VALUES (4, 2, 1);
 
-INSERT INTO inventory (market_id, city_id, camper_id, item_name, description, image_url, price, quantity, active) VALUES (1, NULL, 1, "item 1", "watch me item 1", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 10, 10, 1);
-INSERT INTO inventory (market_id, city_id, camper_id, item_name, description, image_url, price, quantity, active) VALUES (NULL, 1, 1, "item 2 (city)", "watch me item 2", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 10, 10, 1);
+INSERT INTO inventory (market_id, city_id, camper_id, item_name, description, image_url, price, quantity, active) VALUES (1, NULL, 1, "item 1", "item market 1", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 10, 10, 1);
+INSERT INTO inventory (market_id, city_id, camper_id, item_name, description, image_url, price, quantity, active) VALUES (NULL, 1, 2, "item 2", "item city 1", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 10, 10, 1);
+INSERT INTO inventory (market_id, city_id, camper_id, item_name, description, image_url, price, quantity, active) VALUES (2, NULL, 3, "item 3", "item market 2", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 10, 10, 1);
+INSERT INTO inventory (market_id, city_id, camper_id, item_name, description, image_url, price, quantity, active) VALUES (NULL, 2, 4, "item 4", "item city 2", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 10, 10, 1);
 
+INSERT INTO raffle_item (market_id, city_id, item_name, description, image_url, active) VALUES (1, NULL, "raffle item 1", "raffle item market 1", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 1);
+INSERT INTO raffle_item (market_id, city_id, item_name, description, image_url, active) VALUES (NULL, 1, "raffle item 2", "raffle item city 1", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 1);
+INSERT INTO raffle_item (market_id, city_id, item_name, description, image_url, active) VALUES (2, NULL, "raffle item 3", "raffle item market 2", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 1);
+INSERT INTO raffle_item (market_id, city_id, item_name, description, image_url, active) VALUES (NULL, 2, "raffle item 4", "raffle item city 2", "https://upload.wikimedia.org/wikipedia/en/8/88/Item_%28TV_series%29.jpg", 1);

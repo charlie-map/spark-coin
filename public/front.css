@@ -187,6 +187,98 @@ input:invalid {
 	width: 70px;
 }
 
+.select-icons.left {
+	right: 0;
+	left: 5px;
+}
+
+.market_select {
+	height: 0;
+}
+
+.market_select.active {
+	height: 70px;
+}
+
+.market_select img {
+	height: 100%;
+	width: 70px;
+	border-radius: 10px;
+}
+
+.market_select.active img:hover {
+	cursor: pointer;
+}
+
+.market-option-select ol {
+	list-style-type: none;
+}
+
+.market-option-select {
+	position: absolute;
+	top: 5px;
+	left: calc(0px - 50vw);
+	width: 5vw;
+	transition: all 0.7s ease-in-out;
+}
+
+.market-option-select.open {
+	top: 5px;
+	left: 80px;
+	width: 50vw;
+}
+
+.market-option-select ol {
+	padding: 0;
+	margin: 0;
+	background-color: #00a6a6;
+	max-height: 300px;
+	overflow-y: scroll;
+}
+
+.market-option-select ol li:hover {
+	cursor: pointer;
+}
+
+.market-option-select ol li img {
+	height: 100%;
+	width: 60px;
+}
+
+.market-option-select p {
+	margin: 0;
+	width: 100%;
+	transform: scale(1, 0);
+	transition: all 0.7 ease-in-out;
+}
+
+.market-option-select.open p {
+	transform: scale(1, 1);
+}
+
+.market-option {
+	height: 0px;
+	font-size: 0px;
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	transition: all 0.2s ease-in-out;
+}
+
+.market-option.drop-down {
+	height: 60px;
+	font-size: 16px;
+}
+
+.fact-data {
+	margin-left: 5px;
+	height: 100%;
+	display: flex;
+	align-items: flex-start;
+	flex-direction: column;
+	justify-content: center;
+}
+
 /* Inventory CSS */
 .icon-div {
 	font-weight: bold;
@@ -343,6 +435,40 @@ input:invalid {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+#suggestor {
+	position: absolute;
+	height: 0;
+	transition: height 0.5s ease-in-out;
+}
+
+#suggestor ol {
+	background-color: white;
+	height: 0;
+	padding: 0;
+	margin: 0;
+	margin-top: 5px;
+}
+
+#suggestor.open ol {
+	height: auto;
+}
+
+#suggestor ol li {
+	list-style-type: none;
+	font-size: 0;
+	margin-bottom: 3px;
+	transition: font-size 0.5s ease-in-out;
+}
+
+#suggestor.open {
+	height: auto;
+}
+
+#suggestor.open ol li {
+	font-size: 100%;
+	width: 100%;
 }
 
 /* ADMIN INVENTORY */

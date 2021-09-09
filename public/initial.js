@@ -73,6 +73,13 @@ $(window).on('resize', function() {
 	$(".shake_balance").css("left", $(".lightning-bolt").offset().left + 70 + "px");
 });
 
+$(".inventory-popup").on('click', '#raffle_option button', function() {
+	$("#raffle_option").children("button").removeClass("selected");
+
+	$(this).addClass("selected");
+	$(".inner-inventory").find("span.price").text($(this).text());
+});
+
 function pull_inventory() {
 	if ($(".inventory-popup").hasClass('open')) {
 		$(".inventory-popup").show();
@@ -85,6 +92,17 @@ function pull_inventory() {
 	socket.emit('inventory_get', (all_inventory) => {
 		$(".inner-inventory").empty();
 
+		$("#raffle_option").remove();
+
+		if(all_inventory[0] && all_inventory[0].raffle == 1) {
+			$(`
+				<div id="raffle_option">
+					<button id="buy_1" class="selected">1</button>
+					<button id="buy_2">10</button>
+					<button id="buy_3">100</button>
+				</div>
+			`).insertAfter(".close-inventory");
+		}
 		all_inventory.forEach(invent => {
 
 			let inventory_item = "<div id='" + invent.id + "'>" +

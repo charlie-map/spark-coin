@@ -225,7 +225,7 @@ input:invalid {
 .market-option-select.open {
 	top: 5px;
 	left: 80px;
-	width: 50vw;
+	width: calc(100vw - 160px);
 }
 
 .market-option-select ol {
@@ -545,7 +545,6 @@ input:invalid {
 
 .selected {
 	display: block;
-	border-top: 10px #00a6a6 solid;
 	border-bottom: 5px #00a6a6 solid;
 	width: 100%;
 	height: calc(100% - 11%);
@@ -1292,6 +1291,24 @@ input:invalid {
 	to {
 		transform: translateX(0%);
 	}
+}
+
+#raffle_option {
+	height: 30px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+#raffle_option > button {
+	height: 100%;
+	width: calc(100% / 3 - 1px);
+	border: 1px solid #00a6a6;
+}
+
+#raffle_option > button.selected {
+	background-color: #00a6a6;
 }
 
 @media only screen and (max-width: 500px), screen and (max-height: 700px) {

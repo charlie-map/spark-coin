@@ -84,7 +84,8 @@ app.post("/changeMarket", isLoggedIn(), (req, res, next) => {
 	res.redirect("/");
 });
 
-// TODO: RECONSIDER AND/OR REWORK
+/* DEPRECATED PENDING REWORK
+TODO: RECONSIDER AND/OR REWORK
 
 app.post("/close-sparks", (req, res) => {
 	connection.query("SELECT value FROM settings WHERE name='block_camper'", (err, uuid_value) => {
@@ -98,14 +99,12 @@ app.post("/close-sparks", (req, res) => {
 
 		}, 3630000)
 	});
-});
+}); */
 
 /* STAFFER ENDPOINTS */
 
-// TODO: INVENTORY REWORK
-
 app.get("/inventory", isLoggedIn(1), (req, res) => {
-	connection.query("SELECT * FROM inventory LEFT JOIN tx ON inventory.id = tx.inventory_item WHERE camper_id = ?;", [req.user.id], (err, result) => {
+	connection.query("SELECT * FROM inventory LEFT JOIN tx ON inventory.id = tx.inventory_item WHERE camper_id = ? AND market_id = ?;", [req.user.camper_id, req.user.market], (err, result) => {
 		if (err) return next(err);
 		res.json(result);
 	});
@@ -113,7 +112,7 @@ app.get("/inventory", isLoggedIn(1), (req, res) => {
 
 app.put("/inventory", isLoggedIn(1), (req, res) => {
 	if (!req.body.item_name || !req.body.description || !req.body.image_url || !req.body.price || !req.body.quantity) return next(new Error('Required field missing.'));
-	connection.query("INSERT INTO inventory (camper_id, item_name, description, image_url, price, quantity, active) VALUES (?, ?, ?, ?, ?, ?, 1);", [req.user.id, req.body.item_name, req.body.description, req.body.image_url, req.body.price, req.body.quantity], (err) => {
+	connection.query("INSERT INTO inventory (market_id, camper_id, item_name, description, image_url, price, quantity, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1);", [req.user.market_id, req.user.camper_id, req.body.item_name, req.body.description, req.body.image_url, req.body.price, req.body.quantity], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
@@ -121,25 +120,21 @@ app.put("/inventory", isLoggedIn(1), (req, res) => {
 
 app.delete("/inventory", isLoggedIn(1), (req, res) => {
 	if (!req.body.id) return next(new Error('Required field missing.'));
-	connection.query("UPDATE inventory SET active = 0 WHERE id = ? AND camper_id = ?;", [req.body.id, req.user.id], (err) => {
+	connection.query("UPDATE inventory SET active = 0 WHERE id = ? AND camper_id = ?;", [req.body.id, req.user.campor_id], (err) => {
 		if (err) return next(err);
 		res.end(req.body.id);
 	});
 });
 
-// END TODO
-
 app.post("/slack", isLoggedIn(1), (req, res, next) => {
 	if (!req.body.slack_id) return next(new Error('Required field missing'));
-	connection.query("UPDATE spark_user SET slack_id = ? WHERE camper_id = ?;", [req.body.slack_id, req.user.id], (err) => {
+	connection.query("UPDATE spark_user SET slack_id = ? WHERE camper_id = ?;", [req.body.slack_id, req.user.camper_id], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
 });
 
 /* ADMIN ENDPOINTS */
-
-// TODO: SETTINGS REWORK
 
 app.get("/admin/setting", isLoggedIn(2), (req, res, next) => {
 	connection.query("SELECT * FROM settings;", (err, result) => {
@@ -157,10 +152,6 @@ app.post("/admin/setting", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
-// END TODO
-
-// TODO: INVENTORY REWORK
-
 app.get("/admin/inventory", isLoggedIn(2), (req, res, next) => {
 	connection.query("SELECT * FROM inventory WHERE camper_id IS NULL;", (err, result) => {
 		if (err) return next(err);
@@ -169,15 +160,24 @@ app.get("/admin/inventory", isLoggedIn(2), (req, res, next) => {
 });
 
 app.get("/admin/inventory/all", isLoggedIn(2), (req, res, next) => {
-	connection.query("SELECT inventory.*, COALESCE(spark_user.camp_name, CONCAT(registration.camper.first_name, ' ', registration.camper.last_name)) AS owner FROM inventory LEFT JOIN spark_user ON inventory.camper_id=spark_user.camper_id LEFT JOIN registration.camper ON registration.camper.id=spark_user.camper_id;", (err, result) => {
+	connection.query("SELECT inventory.*, COALESCE(spark_user.camp_name, CONCAT(spark_user.first_name, ' ', spark_user.last_name)) AS owner FROM inventory LEFT JOIN spark_user ON inventory.camper_id=spark_user.camper_id;", (err, result) => {
 		if (err) return next(err);
 		res.json(result);
 	});
 });
 
 app.put("/admin/inventory", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.item_name || !req.body.description || !req.body.image_url || !req.body.price || !req.body.quantity) return next(new Error('Required field missing.'));
-	connection.query("INSERT INTO inventory (camper_id, item_name, description, image_url, price, quantity, active) VALUES (NULL, ?, ?, ?, ?, ?, 1);", [req.body.item_name, req.body.description, req.body.image_url, req.body.price, req.body.quantity], (err) => {
+	if (!req.body.item_name || !req.body.description || !req.body.image_url || !req.body.price || !req.body.quantity || (!req.body.market_id && !req.body.city_id)) return next(new Error('Required field missing.'));
+	if (req.body.city_id && req.body.market_id) return next(new Error('Specify a city or a market, not both.'));
+	let insertion = "", insertion_value = "";
+	if (req.body.city_id) {
+		insertion = "city_id";
+		insertion_value = req.body.city_id;
+	} else {
+		insertion = "market_id";
+		insertion_value = req.body.market_id;
+	}
+	connection.query(`INSERT INTO inventory (${insertion}, camper_id, item_name, description, image_url, price, quantity, active) VALUES (${insertion_value}, NULL, ?, ?, ?, ?, ?, 1);`, [req.body.item_name, req.body.description, req.body.image_url, req.body.price, req.body.quantity], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
@@ -199,8 +199,17 @@ app.get("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
 });
 
 app.put("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
-	if (!req.body.item_name || !req.body.description) return next(new Error('Required field missing.'));
-	connection.query("INSERT INTO raffle_item (item_name, description, image_url, active) VALUES (?, ?, ?, 1);", [req.body.item_name, req.body.description, req.body.image_url], (err) => {
+	if (!req.body.item_name || !req.body.description || (!req.body.market_id && !req.body.city_id)) return next(new Error('Required field missing.'));
+	if (req.body.city_id && req.body.market_id) return next(new Error('Specify a city or a market, not both.'));
+	let insertion = "", insertion_value = "";
+	if (req.body.city_id) {
+		insertion = "city_id";
+		insertion_value = req.body.city_id;
+	} else {
+		insertion = "market_id";
+		insertion_value = req.body.market_id;
+	}
+	connection.query(`INSERT INTO raffle_item (${insertion}, item_name, description, image_url, active) VALUES (${insertion_value}, ?, ?, ?, 1);`, [req.body.item_name, req.body.description, req.body.image_url], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
@@ -213,8 +222,6 @@ app.delete("/admin/inventory/raffle", isLoggedIn(2), (req, res, next) => {
 		res.end(req.body.id + "||" + req.body.class);
 	});
 });
-
-// END TODO
 
 /* -- DEPRECATED --
 

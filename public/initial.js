@@ -114,7 +114,16 @@ function pull_inventory() {
 $("#submit-sparks").click(function(event) {
 	event.preventDefault();
 
-	let receiving_id = $("#receiver_id_value").val();
+	let receiving_id_name = $("#receiver_id_value").val();
+	// make sure there is a id corrisponding to the name
+	let find_suggests = suggest(trie_words, [receiving_id_name.split(" ")[0]]);
+	if (find_suggests == "No suggestions") {
+		popout_alert("Invalid user");
+		return;
+	}
+
+	let receiving_id = find_suggests.map(item => {return item.value == receiving_id_name ? item.camper_id : -1}).find(element => element >= 0);
+
 	let amount = $("#number_send_item").val();
 	let message = $("#message_send_item").val();
 	socket.emit('transfer', receiving_id, amount, message, (err) => {
@@ -342,7 +351,7 @@ let trie_words = {
 		output:
 			- updated trie with new values and loads added
 */
-function insert(trie, letter_array, ender) {
+function insert(trie, letter_array, ender, camper_id) {
 	if (!letter_array.length) {
 		trie.names = ender;
 		return trie;
@@ -359,13 +368,14 @@ function insert(trie, letter_array, ender) {
 		// need to add a new item to the trie
 		trie.child.push({
 			value: first_item,
+			camper_id: camper_id,
 			load: !letter_array.length ? 1 : 0,
 			child: []
 		});
 	else
 		trie.child[find_item].load += !letter_array.length ? 1 : 0;
 
-	return insert(trie.child[find_item], letter_array, ender);
+	return insert(trie.child[find_item], letter_array, ender, camper_id);
 }
 
 /*
@@ -386,6 +396,7 @@ function suggest(trie, word, accum) {
 	if (!trie.child.length)
 		return [{
 			value: accum,
+			camper_id: trie.camper_id,
 			load: trie.load,
 			name_dir: trie.names
 		}];
@@ -430,10 +441,10 @@ socket.emit('get_people', function(info) {
 		if (!camp_name) insert(trie_letters, info.last_name.split(""));
 
 		// insert regular first_name, last_name:
-		insert(trie_words, camp_name ? [camp_name] : [info.first_name, info.last_name]);
+		insert(trie_words, camp_name ? [camp_name] : [info.first_name, info.last_name], "", info.camper_id);
 
 		// then add reverse last_name, first_name:
-		if (!camp_name) insert(trie_words, [info.last_name, info.first_name], info.first_name + "||reverse");
+		if (!camp_name) insert(trie_words, [info.last_name, info.first_name], info.first_name + "||reverse", info.camper_id);
 	});
 });
 
@@ -529,7 +540,7 @@ $("#receiver_id_value").keyup(function() {
 
 	for (let all_sugg = 0; all_sugg < full_suggests.length; all_sugg++) {
 		$("#suggestor ol").append(`
-			<li>${full_suggests[all_sugg].value}</li>
+			<li camper_id_attr="${full_suggests[all_sugg].camper_id}"">${full_suggests[all_sugg].value}</li>
 		`);
 	}
 });
@@ -589,6 +600,4 @@ function quicksort(array, low, high) {
 
 $("#suggestor ol").on('click', 'li', function() {
 	$("#receiver_id_value").val($(this).text());
-
-	$("#receiver_id_value").focus();
 });

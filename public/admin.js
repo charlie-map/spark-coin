@@ -150,12 +150,21 @@ $(".raffle-inventory-select").click(function() {
 $("#submit-sparks").click(function(event) {
 	event.preventDefault();
 
-	let receiving_id = $("#receiver_id_value").val();
+	let receiving_id_name = $("#receiver_id_value").val();
+	// make sure there is a id corrisponding to the name
+	let find_suggests = suggest(trie_words, [receiving_id_name.split(" ")[0]]);
+	if (find_suggests == "No suggestions") {
+		popout_alert("Invalid user");
+		return;
+	}
+
+	let receiving_id = find_suggests.map(item => {return item.value == receiving_id_name ? item.camper_id : -1}).find(element => element >= 0);
+
 	let amount = $("#number_send_item").val();
 	let message = $("#message_send_item").val();
 	socket.emit('transfer', receiving_id, amount, message, (err) => {
 		if (err)
-			popout_alert(JSON.stringify(err).replace(/["]/g, ""));
+			popout_alert(JSON.stringify(err));
 		else
 			popout_alert("Success!");
 	});
@@ -1021,3 +1030,7 @@ function quicksort(array, low, high) {
 	array[high] = buffer;
 	return lowest;
 }
+
+$("#suggestor ol").on('click', 'li', function() {
+	$("#receiver_id_value").val($(this).text());
+});

@@ -542,8 +542,8 @@ io.on('connection', (socket) => {
 		updateLogin(socket.user.camper_id).catch(() => {
 			return;
 		});
-		connection.query("SELECT tx_time, raffle_item, COALESCE(inventory.item_name, raffle_item.item_name) AS item_name, COALESCE(inventory.description, raffle_item.description) AS description, COALESCE(inventory.image_url, raffle_item.image_url) AS image_url, inventory.camper_id AS owner_id, COALESCE(OWN_S.camp_name, CONCAT(OWN.first_name, ' ', OWN.last_name)) AS owner, price, COALESCE(inventory.active, raffle_item.active) AS active, receiver_id, sender_id, COALESCE(REC_S.camp_name, CONCAT(REC.first_name, ' ', REC.last_name)) AS receiver_name, COALESCE(SEN_S.camp_name, CONCAT(SEN.first_name, ' ', SEN.last_name)) AS sender_name, amount, message FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id LEFT JOIN raffle_item ON tx.raffle_item = raffle_item.id LEFT JOIN registration.camper REC ON tx.receiver_id = REC.id LEFT JOIN registration.camper SEN ON tx.sender_id = SEN.id LEFT JOIN registration.camper OWN ON inventory.camper_id = OWN.id LEFT JOIN spark_user REC_S ON receiver_id = REC_S.camper_id LEFT JOIN spark_user SEN_S ON sender_id = SEN_S.camper_id LEFT JOIN spark_user OWN_S ON inventory.camper_id = OWN_S.camper_id" + (socket.user.staffer != 2 ? " WHERE tx.sender_id = ? OR tx.receiver_id = ? OR inventory.camper_id = ?" : "") + " ORDER BY tx_time DESC;", [socket.user.camper_id, socket.user.camper_id, socket.user.camper_id], (err, result) => {
-			if (err || !result) cb([]);
+		connection.query("SELECT tx_time, raffle_item, COALESCE(inventory.item_name, raffle_item.item_name) AS item_name, COALESCE(inventory.description, raffle_item.description) AS description, COALESCE(inventory.image_url, raffle_item.image_url) AS image_url, inventory.camper_id AS owner_id, COALESCE(OWN_S.camp_name, CONCAT(OWN.first_name, ' ', OWN.last_name)) AS owner, price, COALESCE(inventory.active, raffle_item.active) AS active, receiver_id, sender_id, COALESCE(REC_S.camp_name, CONCAT(REC.first_name, ' ', REC.last_name)) AS receiver_name, COALESCE(SEN_S.camp_name, CONCAT(SEN.first_name, ' ', SEN.last_name)) AS sender_name, amount, message FROM tx LEFT JOIN inventory ON tx.inventory_item = inventory.id LEFT JOIN raffle_item ON tx.raffle_item = raffle_item.id LEFT JOIN spark_user REC ON tx.receiver_id = REC.camper_id LEFT JOIN spark_user SEN ON tx.sender_id = SEN.camper_id LEFT JOIN spark_user OWN ON inventory.camper_id = OWN.camper_id LEFT JOIN market_membership REC_S ON receiver_id = REC_S.camper_id AND REC_S.market_id = ? LEFT JOIN market_membership SEN_S ON sender_id = SEN_S.camper_id AND SEN_S.market_id = ? LEFT JOIN market_membership OWN_S ON inventory.camper_id = OWN_S.camper_id AND OWN_S.market_id = ?" + (socket.user.markets[socket.user.market].staffer != 2 ? " WHERE tx.sender_id = ? OR tx.receiver_id = ? OR inventory.camper_id = ?" : "") + " ORDER BY tx_time DESC;", [socket.user.market, socket.user.market, socket.user.market, socket.user.camper_id, socket.user.camper_id, socket.user.camper_id], (err, result) => {
+			if (err || !result) return cb([]);
 			// create filtered return object:
 			// transaction: { purchase: 0/1, tx_time
 			// <if purchase=0> received: 0/1, receiver_id, sender_id, receiver_name, sender_name, amount, message }
@@ -559,7 +559,7 @@ io.on('connection', (socket) => {
 					new_tx.item_name = tx.item_name;
 					new_tx.description = tx.description;
 					new_tx.image_url = tx.image_url;
-					new_tx.price = tx.raffle_item ? 1 : tx.price;
+					new_tx.price = tx.price;
 					new_tx.active = tx.active;
 					new_tx.purchaser_id = tx.sender_id;
 					new_tx.purchaser_name = tx.sender_name;
@@ -577,7 +577,7 @@ io.on('connection', (socket) => {
 				}
 				return new_tx;
 			});
-			if (socket.user.staffer == 0) {
+			if (socket.user.markets[socket.user.market].staffer == 0) {
 				result = result.reduce((result, tx) => {
 					if (tx.purchase && tx.raffle) {
 						let raffleSearch = result.find((tx_search) => {
@@ -618,20 +618,23 @@ io.on('connection', (socket) => {
 		});
 	});
 
-	socket.on('purchase', async (item_id, cb) => {
-		if (!socket.user || socket.user.staffer != 0) return cb("Not logged in / not correct role.");
+	socket.on('purchase', async (item_id, cb, raffle_amount = 1) => {
+		if (!socket.user || socket.user.markets[socket.user.market].staffer != 0) return cb("Not logged in / not correct role.");
+		let market = socket.user.markets[socket.user.market];
 		updateLogin(socket.user.camper_id).catch(() => {
 			return;
 		});
 		try {
 			// get data about inventory item & verify quantity / active
 			let item = await new Promise((resolve, reject) => {
-				if (settings.raffle) {
+				if (market.raffle_active_market || market.raffle_active_city) {
 					connection.query("SELECT * FROM raffle_item WHERE id = ?;", [item_id], (err, result) => {
 						if (err) reject(err);
 						if (!result) reject("Invalid raffle item.");
 						if (result[0].active != 1) reject("This raffle item is unavailable.");
-						result[0].price = 1;
+						if (market.raffle.active_city && !result[0].market_id && result[0].city_id != market.city_id) reject("This raffle item is unavailable.");
+						if (market.raffle_active_market && !result[0].city_id && result[0].market_id != market.id) reject("This raffle item is unavailable.");
+						result[0].price = raffle_amount;
 						resolve(result[0]);
 					});
 				} else {
@@ -639,6 +642,7 @@ io.on('connection', (socket) => {
 						if (err) reject(err);
 						if (!result) reject("Invalid item.");
 						if (result[0].quantity < 1 || result[0].active != 1) reject("This item is unavailable.");
+						if (result[0].market_id != market.id || result[0].city_id != market.city_id) reject("You can't access this item here.");
 						resolve(result[0]);
 					});
 				}
@@ -656,11 +660,11 @@ io.on('connection', (socket) => {
 			bal -= item.price;
 			bal = roundTo(bal, 3);
 
-			if (settings.raffle) {
+			if (market.raffle_active_market || market.raffle_active_city) {
 				await new Promise((resolve, reject) => {
 					connection.query("UPDATE spark_user SET balance = ? WHERE camper_id = ?;", [bal, socket.user.camper_id], (err) => {
 						if (err) reject(err);
-						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (NULL, ?, NULL, ?, 1, NULL, ?);", [socket.user.camper_id, item.id, new Date()], (err) => {
+						connection.query("INSERT INTO tx (receiver_id, sender_id, inventory_item, raffle_item, amount, message, tx_time) VALUES (NULL, ?, NULL, ?, ?, NULL, ?);", [socket.user.camper_id, item.id, item.price, new Date()], (err) => {
 							if (err) reject(err);
 							resolve();
 						});
@@ -692,7 +696,7 @@ io.on('connection', (socket) => {
 			if (!item.camper_id) { // camp-wide alert for camp-wide item
 				// loop through users and find all admins
 				let admin_slack_ids = await new Promise((resolve, reject) => {
-					connection.query("SELECT camper_id, slack_id FROM spark_user WHERE staffer > 1;", (err, result) => {
+					connection.query("SELECT camper_id, slack_id FROM spark_user LEFT JOIN market_membership ON spark_user.camper_id = market_membership.camper_id WHERE staffer > 1 AND market_id = ?;", [socket.user.market], (err, result) => {
 						if (err || !result)
 							resolve(null)
 						resolve(result);
@@ -763,7 +767,7 @@ io.on('connection', (socket) => {
 		if (socket.user.camper_id == receiving_id) return cb("Can't transfer Sparks to yourself.");
 		try {
 			// get/verify amounts
-			let sending_bal = socket.user.staffer == 2 ? Infinity : await new Promise((resolve, reject) => {
+			let sending_bal = socket.user.markets[socket.user.market].staffer == 2 ? Infinity : await new Promise((resolve, reject) => {
 				connection.query("SELECT balance FROM spark_user WHERE camper_id = ?;", [socket.user.camper_id], (err, result) => {
 					if (err || !result || !result[0]) reject("Sending camper does not exist.");
 					if (result[0].balance < amount) reject("Not enough Sparks.");

@@ -73,11 +73,23 @@ $(window).on('resize', function() {
 	$(".shake_balance").css("left", $(".lightning-bolt").offset().left + 70 + "px");
 });
 
-$(".inventory-popup").on('click', '#raffle_option button', function() {
-	$("#raffle_option").children("button").removeClass("selected");
+let numberConnect = {
+	1: "one",
+	2: "two",
+	3: "three"
+}
 
-	$(this).addClass("selected");
-	$(".inner-inventory").find("span.price").text($(this).text());
+// assumed we're in raffle mode
+$(".inventory-popup").on('click', '#raffle_option button', function() {
+	let amount = $(this).html();
+	let numb = this.id.replace(/[^0-9]/g, "");
+
+	$("#raffle_animator").removeClass();
+	$("#raffle_animator").addClass(numberConnect[numb]);
+
+	$("#raffle_option button").removeClass('selected');
+	$(this).addClass('selected');
+	$(".price").html(amount);
 });
 
 function pull_inventory() {
@@ -92,16 +104,20 @@ function pull_inventory() {
 	socket.emit('inventory_get', (all_inventory) => {
 		$(".inner-inventory").empty();
 
+		$("#raffle_animator").hide();
 		$("#raffle_option").remove();
 
 		if(all_inventory[0] && all_inventory[0].raffle == 1) {
+			$("#raffle_animator").show();
+			$("#raffle_animator").removeClass();
+			$("#raffle_animator").addClass('one');
 			$(`
 				<div id="raffle_option">
 					<button id="buy_1" class="selected">1</button>
 					<button id="buy_2">10</button>
 					<button id="buy_3">100</button>
 				</div>
-			`).insertAfter(".close-inventory");
+			`).insertAfter("#raffle_animator");
 		}
 		all_inventory.forEach(invent => {
 
@@ -192,7 +208,7 @@ $(".inner-inventory").on("click", ".purchase-item", function() {
 
 		$(".inventory-popup").removeClass("open");
 		pull_inventory();
-	});
+	}, $(this).children("span.price").text());
 });
 
 $(".close-send-item").click(() => {

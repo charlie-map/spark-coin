@@ -1308,7 +1308,28 @@ input:invalid {
 }
 
 #raffle_option > button.selected {
-	background-color: #00a6a6;
+	background: none !important;
+	color: #181a1b;
+}
+
+#raffle_animator {
+	height: 30px;
+	width: calc(100% / 3 - 1px);
+	background: #00a6a6;
+	position: absolute;
+	transition: 0.5s left ease-in-out;
+}
+
+#raffle_animator.one {
+	left: 0;
+}
+
+#raffle_animator.two {
+	left: calc(100% / 3 - 1px);
+}
+
+#raffle_animator.three {
+	left: calc(100% / 3 * 2 - 2px);
 }
 
 @media only screen and (max-width: 500px), screen and (max-height: 700px) {

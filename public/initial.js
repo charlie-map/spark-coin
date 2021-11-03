@@ -348,7 +348,7 @@ $(".market-option-select ol").on("click", "li", function() {
 			location.reload();
 		},
 		error: function(error) {
-			popout_alert(error);
+			popout_alert(error.status == 0 ? "An error occured" : error.message);
 		}
 	});
 });

@@ -91,7 +91,7 @@ function pull_inventory(admin_or_all) {
 						"<div class='item-info'>" +
 						"<div style='display-inline;' class='item-name'>" + invent.item_name + "</div>" +
 						"<ion-icon name='chevron-forward-outline'></ion-icon>" +
-						"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "❓❓❓") + "</div>" +
+						"<div style='display: inline;' class='seller'>" + (invent.owner ? invent.owner : "You") + "</div>" +
 						"</div>" +
 						"<button id='" + invent.id + "' class='purchase-item'>" +
 						"<span class='lightning-bolt-button'>⚡</span>" +

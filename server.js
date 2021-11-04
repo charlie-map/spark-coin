@@ -308,32 +308,38 @@ app.get("admin/campers/campname", isLoggedIn(2), (req, res, next) => {
 	});
 });
 
-// TODO: RAFFLE REWORK
+/* ADMIN RAFFLE ENDPOINTS */
 
 app.get("/admin/raffle/value", isLoggedIn(2), (req, res, next) => {
-	res.end("" + settings.raffle);
+	if ((!req.query.market_id && !req.query.city_id) || (req.query.market_id && req.query.city_id)) return next(new Error('Select market or city; not both.'));
+	connection.query(`SELECT raffle_active FROM ${req.query.city_id ? 'city' : 'market'} WHERE id = ?;`, [req.query.city_id ? req.query.city_id : req.query.market_id], (err, row) => {
+		if (err || !row) return next(err);
+		res.json(row[0].raffle_active);
+	});
 });
 
 app.post("/admin/raffle", isLoggedIn(2), (req, res, next) => {
-	settings.raffle = !settings.raffle;
-	connection.query('UPDATE settings SET value = ? WHERE name = \'raffle\';', [settings.raffle], (err) => {
+	if ((!req.body.market_id && !req.body.city_id) || (req.body.market_id && req.body.city_id)) return next(new Error('Select market or city; not both.'));
+	connection.query(`UPDATE ${req.body.city_id ? 'city' : 'market'} SET raffle_active = !raffle_active WHERE id = ?;`, [req.body.city_id ? req.body.city_id : req.body.market_id], (err) => {
 		if (err) return next(err);
-		res.end("" + settings.raffle);
+		res.end();
 	});
 });
 
 app.delete("/admin/raffle", isLoggedIn(2), (req, res, next) => {
-	connection.query('UPDATE raffle_item SET active = 0;', (err) => {
+	if ((!req.body.market_id && !req.body.city_id) || (req.body.market_id && req.body.city_id)) return next(new Error('Select market or city; not both.'));
+	connection.query(`UPDATE raffle_item SET active = 0 WHERE ${req.body.city_id ? 'city_id' : 'market_id'} = ?;`, [req.body.city_id ? req.body.city_id : req.body.market_id], (err) => {
 		if (err) return next(err);
 		res.end();
 	});
 });
 
 app.get("/admin/raffle", isLoggedIn(2), async (req, res, next) => {
+	if ((!req.query.market_id && !req.query.city_id) || (req.query.market_id && req.query.city_id)) return next(new Error('Select market or city; not both.'));
 	try {
 		// get all raffle items
 		let raffle_items = await new Promise((resolve, reject) => {
-			connection.query("SELECT * FROM raffle_item WHERE active = 1;", (err, result) => {
+			connection.query(`SELECT * FROM raffle_item WHERE active = 1 AND ${req.query.city_id ? 'city_id' : 'market_id'} = ?;`, [req.query.city_id ? req.query.city_id : req.query.market_id], (err, result) => {
 				if (err) reject(err);
 				resolve(result);
 			});
@@ -342,13 +348,22 @@ app.get("/admin/raffle", isLoggedIn(2), async (req, res, next) => {
 		// select raffle winner (-1 if nobody bought tickets)
 		let winners = raffle_items.map((item) => {
 			return new Promise((resolve, reject) => {
-				connection.query("SELECT sender_id FROM tx WHERE raffle_item = ?;", [item.id], (err, result) => {
+				connection.query("SELECT sender_id, amount FROM tx WHERE raffle_item = ?;", [item.id], (err, result) => {
 					if (err) reject(err);
 					if (!result || !result.length) {
 						item.winner = -1;
 						return resolve(item);
 					}
-					item.winner = result[Math.floor(Math.random() * result.length)].sender_id;
+					// weighted probability based on ticket amounts
+					let win_draw = Math.floor(Math.random() * result.reduce((sum, row) => { return sum + row.amount }, 0));
+					for (let i = 0; i < result.length; i++) {
+						win_draw -= result[i].amount;
+						if (win_draw <= 0) {
+							item.winner = result[i].sender_id;
+							return resolve(item);
+						}
+					}
+					item.winner = -1;
 					return resolve(item);
 				});
 			});
@@ -362,9 +377,9 @@ app.get("/admin/raffle", isLoggedIn(2), async (req, res, next) => {
 					item.winner_name = "Nobody Won";
 					return resolve(item);
 				}
-				connection.query("SELECT first_name, last_name FROM registration.camper WHERE id = ?;", [item.winner], (err, result) => {
+				connection.query(`SELECT COALESCE(${req.query.market_id ? 'camp_name, ' : ''}CONCAT(first_name, ' ', last_name)) AS winner_name FROM spark_user ${req.query.market_id ? 'LEFT JOIN market_membership ON spark_user.camper_id = market_membership.camper_id AND market_membership.market_id = ' + req.query.market_id : ''} WHERE spark_user.camper_id = ?;`, [item.winner], (err, result) => {
 					if (err) reject(err);
-					item.winner_name = result[0].first_name + ' ' + result[0].last_name;
+					item.winner_name = result[0].winner_name;
 					return resolve(item);
 				});
 			});
@@ -375,8 +390,6 @@ app.get("/admin/raffle", isLoggedIn(2), async (req, res, next) => {
 		next(err);
 	}
 });
-
-// END TODO
 
 app.get("/admin/log/all", isLoggedIn(2), (req, res, next) => {
 	connection.query("SELECT * FROM tx ORDER BY tx_time DESC;", (err, result) => {

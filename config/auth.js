@@ -70,7 +70,8 @@ function deserializeUser(user_obj) {
 			connection.query("SELECT market.id as market_id, market.name, icon, staffer, camp_name, city_id, city.name AS city_name, market.raffle_active as raffle_active_market, city.raffle_active as raffle_active_city FROM market_membership LEFT JOIN market ON market_membership.market_id = market.id LEFT JOIN city ON market.city_id = city.id WHERE camper_id = ? AND market.disabled = 0 ORDER BY staffer ASC;", [user_obj.camper_id], (err, markets) => {
 				if (err || !markets) return reject(err ? err : "You are not a participant in any currently active Spark market.");
 				deserialized.markets = markets.reduce((result, item) => { result[item.market_id] = item; return result; }, {});
-				deserialized.staffer = deserialized.markets[user_obj.market].staffer;
+				// if user is admin anywhere, user is admin everywhere:
+				deserialized.staffer = markets.reduce((admin, item) => { return admin || item.staffer == 2; }, false) ? 2 : deserialized.markets[user_obj.market].staffer;
 				deserialized.market = user_obj.market;
 				return resolve(deserialized);
 			});

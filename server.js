@@ -43,12 +43,7 @@ function roundTo(n, digits) {
 
 app.get("/", isLoggedIn(), (req, res, next) => {
 	let staffer = req.user.staffer;
-	if (staffer == 2) {
-		// render admin page
-		return res.render("admin_home", {
-			BALANCE: '∞'
-		});
-	}
+
 	// fix market object for rendering
 	let markets = Object.keys(req.user.markets).map((market_id) => {
 		let obj = {};
@@ -57,10 +52,23 @@ app.get("/", isLoggedIn(), (req, res, next) => {
 		obj.market_name = req.user.markets[market_id].name;
 		obj.icon = req.user.markets[market_id].icon;
 		obj.role = req.user.markets[market_id].staffer;
+
+		obj.city_id = staffer == 2 ? req.user.markets[market_id].city_id : null;
+		obj.city_name = staffer == 2 ? req.user.markets[market_id].city_name : null;
 		if (req.session.camp_name) obj.camp_name = req.user.markets[market_id].camp_name;
 		return obj;
 	});
-	if (staffer == 1)
+
+	if (staffer == 2) {
+
+		console.log(markets);
+		// render admin page
+		res.render("admin_home", {
+			BALANCE: '∞',
+			MARKETS: markets,
+			MARKET: req.user.market
+		});
+	} else if (staffer == 1)
 		res.render("staff_home", {
 			BALANCE: req.user.balance,
 			NEEDSLACK: !req.user.slack_id ? "open" : "",

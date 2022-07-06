@@ -72,6 +72,7 @@ socket.on('balance', (_balance, up_down) => {
 
 $(window).on('resize', function() {
 	$(".shake_balance").css("left", $(".lightning-bolt").offset().left + 70 + "px");
+	$("#raffle-market-select").css("top", $(".raffle-settings-popup > h1").height());
 });
 
 function pull_inventory(admin_or_all) {
@@ -681,44 +682,86 @@ $(".close-logs").click(function() {
 |_| |_| |_|\__,_|_|  |_|\_\___|\__|   \_/\_/ \___/|_|  |_|\_\
 */
 
-$(".market_select.active").click(function() {
-	if ($(".market-option-select").hasClass('open')) {
-		$(".market-option-select").removeClass('open');
+let CURRENT_CITYorMARKET;
+
+function pullCities() {
+	let markets = $(".raffle-market-selection").children("div");
+	let cities = {};
+
+	for (let item = 0; item < markets.length; item++) {
+		cities[$(markets[item]).attr('attr-cityID')] = $(markets[item]).attr('attr-cityName');
+	};
+
+	// take all the cities and create a returnable HTML string:
+
+	let returnString = "";
+	Object.keys(cities).forEach(key => {
+		// if (Object.keys($("#" + key)).length)
+		// 	return;
+
+		returnString += `<li id="${key}city">
+			<div class="market-option drop-down city-version">
+				<img src="https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d">
+				<div class="fact-data">
+					<p class="city-name">${cities[key]}</p>
+					<p>Role -- merchant</p>
+				</div>
+			</div>
+		</li>`
+	});
+
+	return returnString;
+}
+
+function openMarketOptions() {
+	let isRaffle = $(this).hasClass('raffle');
+	let market_selector = isRaffle ? "#raffle-market-select" : "#option-market-select";
+
+	CURRENT_CITYorMARKET = $(".raffle.market_select.active").attr('attr-cityID');
+
+	if (isRaffle) {
+		$(market_selector).css("top", $(".raffle-settings-popup > h1").height());
+	}
+
+	if ($(market_selector).hasClass('open')) {
+		$(market_selector).removeClass('open');
 		return;
 	}
 
-	$(".market-option-select").children("ol").empty();
+	$(market_selector).children("ol").empty();
 
 	// grab any available markets to display:
+	$(this).siblings("div.city-version").remove();
 	let available_markets = $(this).siblings("div");
 
 	//animate__backInLeft
 	// add each of them (including itself into a sub div display)
-	let market_text = `
-		<li id=${$(this).attr('attr-valueMarketID')}>
+	let isCity = $(this).attr('attr-valueMarketName')
+	let market_text = (isCity ?
+		`<li id=${$(this).attr('attr-valueMarketID')}>
 			<div class="market-option drop-down">
 				<img src="${$(this).children("img").attr("src")}">
 				<div class="fact-data">
-					<p>${$(this).attr('attr-valueMarketName')}</p>
+					<p class="market-name">${$(this).attr('attr-valueMarketName')}</p>
 					<p>Role -- ${$(this).attr('attr-valueRole') == "2" ?
 						"merchant" : $(this).attr('attr-valueRole') == "1" ?
 						"trader" : "buyer"}</p>
 				</div>
 			</div>
-		</li>`;
+		</li>` : "") + (isRaffle ? pullCities() : "");
 
-	$(".market-option-select").children("ol").append(market_text);
+	$(market_selector).children("ol").append(market_text);
 
-	$(".market-option-select").addClass('open');
+	$(market_selector).addClass('open');
 
-	setTimeout(function() {
+	setTimeout(function(select, raffle) {
 		for (let add_marks = 0; add_marks < $(available_markets).length; add_marks++) {
 			market_text = `
 			<li id=${$(available_markets[add_marks]).attr('attr-valueMarketID')}>
-				<div class="market-option" id="market_grab${add_marks}">
+				<div class="market-option" id="market_grab${raffle ? "RAFF" : ""}${add_marks}">
 					<img src="${$(available_markets[add_marks]).children("img").attr("src")}">
 					<div class="fact-data">
-						<p>${$(available_markets[add_marks]).attr('attr-valueMarketName')}</p>
+						<p class="market-name">${$(available_markets[add_marks]).attr('attr-valueMarketName')}</p>
 						<p>Role -- ${$(available_markets[add_marks]).attr('attr-valueRole') == "2" ?
 						"merchant" : $(available_markets[add_marks]).attr('attr-valueRole') == "1" ?
 						"trader" : "buyer"}</p>
@@ -726,15 +769,49 @@ $(".market_select.active").click(function() {
 				</div>
 			</li>`;
 
-			$(".market-option-select").children("ol").append(market_text);
-			setTimeout(function() {
-				$("#market_grab" + add_marks).addClass('drop-down');
-			}, 150);
+			$(select).children("ol").append(market_text);
+			setTimeout(function(tick, raff) {
+				$("#market_grab" + (raff ? "RAFF" : "") + tick).addClass('drop-down');
+			}, 150, add_marks, raffle);
 		}
-	}, 700);
-});
+	}, 700, market_selector, isRaffle);
+}
+
+$(".raffle-market-selection").on("click", ".market_select.active", openMarketOptions);
+$(".market-selection").on("click", ".market_select.active", openMarketOptions);
+
+function raffleChangeMarket(_this) {
+	// just change what is considered the "current market" (or city) for raffle
+
+	let cityVmarket = _this.id.replace(/[0-9]/g, "");
+	let cityorMarketID = _this.id.replace(/[^0-9]/g, "");
+
+	$(".raffle-market-selection div").removeClass('active');
+
+	if (cityVmarket == "city") {
+		let isCurrent = $("#marketSelection" + cityorMarketID);
+
+		if (!Object.keys(isCurrent).length) {
+
+			$(".raffle-market-selection").append(`
+				<div id="${cityorMarketID}" attr-cityID="${cityorMarketID}" attr-cityName="${$(_this).children("div").children("div").children(".city-name").text()}" class="raffle market_select city-version active">
+					<img src="https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d">
+				</div>
+			`);
+		} else {
+			$("#" + cityorMarketID).addClass('active');
+		}
+	} else {
+		$(".raffle-market-selection div[attr-valueMarketID=" + cityorMarketID + "]").addClass('active');
+	}
+
+	CURRENT_CITYorMARKET = cityorMarketID + cityVmarket;
+}
 
 $(".market-option-select ol").on("click", "li", function() {
+	if ($(this).parent().parent().attr('id') == "raffle-market-select")
+		return raffleChangeMarket(this);
+
 	$.ajax({
 		type: "POST",
 		url: "/changeMarket",

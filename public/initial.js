@@ -305,7 +305,7 @@ $(".market_select.active").click(function() {
 	setTimeout(function() {
 		for (let add_marks = 0; add_marks < $(available_markets).length; add_marks++) {
 			market_text = `
-			<li id=${$(available_markets[add_marks]).attr('attr-valueMarketID')}>
+			<li id="${$(available_markets[add_marks]).attr('attr-valueMarketID')}">
 				<div class="market-option" id="market_grab${add_marks}">
 					<img src="${$(available_markets[add_marks]).children("img").attr("src")}">
 					<div class="fact-data">

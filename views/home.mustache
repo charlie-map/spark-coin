@@ -42,14 +42,14 @@
 			<div class="select-icons left">
 				<div class="market-selection">
 				{{#MARKETS}}
-					<div class="market_select{{#active}} active{{/active}}"
+					<div class="raffle market_select{{#active}} active{{/active}}"
 					attr-valueMarketName="{{market_name}}" attr-valueRole="{{role}}"
 					attr-valueMarketID="{{market_id}}">
 						<img src="{{icon}}">
 						<!-- also have camp_name for future -->
 					</div>
 				{{/MARKETS}}</div>
-				<div class="market-option-select"><ol></ol></div>
+				<div id="option-market-select" class="market-option-select"><ol></ol></div>
 			</div>
 			<div class="inventory-popup">
 				<h1>Current Inventory</h1>
@@ -90,7 +90,8 @@
 		<div class="message-alert">
 			<h1>Test Alert</h1>
 		</div>
-		<script src="/socket.io/socket.io.js"></script>
-		<script src="/initial.js"></script>
+
+		<script src="./socket.io/socket.io.js"></script>
+		<script src="./initial.js"></script>
 	</body>
 </html>

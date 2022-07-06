@@ -48,18 +48,18 @@
 			</div>
 			<div class="select-icons left">
 				<div class="market-selection">
-				{{#MARKETS}}
+					{{#MARKETS}}
 					<div class="market_select{{#active}} active{{/active}}"
-					attr-valueMarketName="{{market_name}}" attr-valueRole="{{role}}"
-					attr-valueMarketID="{{market_id}}">
+						attr-valueMarketName="{{market_name}}" attr-valueRole="{{role}}"
+						attr-valueMarketID="{{market_id}}">
 						<img src="{{icon}}">
 						<!-- also have camp_name for future -->
 					</div>
 				{{/MARKETS}}</div>
-				<div class="market-option-select"><ol></ol></div>
+				<div id="option-market-select" class="market-option-select"><ol></ol></div>
 			</div>
 			<div class="inventory-popup">
-				<h1>Current Inventory</h1>
+				<h1>Current Inventory for {{MARKET}}</h1>
 				<div class="close-inventory">
 					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
 				</div>
@@ -126,65 +126,53 @@
 					</ol>
 				</div>
 			</div>
+			
 			<div class="raffle-settings-popup">
-				<h1>Raffle Settings</h1>
+				<h1>Raffle Settings for Market <div class="raffle-market">{{MARKET}}</div></h1>
 				<div class="close-raffle-settings">
 					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
 				</div>
-				<div class="raffle-body">
-					<div class="raffle-status">
-						<h2>Raffle Status</h2>
-						<form id="test-slider">
-							<label class="toggle">
-								<div class="toggle__wrapper">
-									<input id="checking-box" type="checkbox">
-									<div id="clicking-raffle-toggle" class="toggle__bg">
-										<div class="toggle__sphere">
-											<div class="toggle__sphere-bg">
-											</div>
-											<div class="toggle__sphere-overlay"></div>
-										</div>
-									</div>
-								</div>
-							</label>
+
+				<div class="raffle-market-selection">{{#MARKETS}}
+					<div class="raffle market_select{{#active}} active{{/active}}"
+						attr-valueMarketName="{{market_name}}" attr-valueRole="{{role}}"
+						attr-valueMarketID="{{market_id}}" 
+						attr-cityID="{{city_id}}" attr-cityName="{{city_name}}">
+						<img src="{{icon}}">
+						<!-- also have camp_name for future -->
+					</div>
+				{{/MARKETS}}</div>
+				<div id="raffle-market-select" class="market-option-select"><ol></ol></div>
+				
+				<div class="camper-information-popup">
+					<h1>Camper Information</h1>
+					<div class="edit-camper-name-information-popup">
+						<h1>Edit Camp Name for</h1>
+						<form method="POST" action="/nowhere">
+							<input type="text" name="message" id="camp-name-change" placeholder="New Camp Name">
+							<input type="submit" value="Edit" class="submit-button" id="submit-new-camp-name">
 						</form>
+						<button id="close-edit-camp-name-popup" class="submit-button">Cancel</button>
 					</div>
-					<button class="raffle-drawing">
-					Draw Campers
-					</button>
-					<div class="raffle-drawing-winners">
+					<div class="close-camper-information">
+						<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
 					</div>
+					<div class="camper-information-body"></div>
+				</div>
+				<div class="log-popup">
+					<h1>Current Logs</h1>
+					<div class="close-logs">
+						<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
+					</div>
+					<div class="logs-inventory"></div>
 				</div>
 			</div>
-			<div class="camper-information-popup">
-				<h1>Camper Information</h1>
-				<div class="edit-camper-name-information-popup">
-					<h1>Edit Camp Name for</h1>
-					<form method="POST" action="/nowhere">
-						<input type="text" name="message" id="camp-name-change" placeholder="New Camp Name">
-						<input type="submit" value="Edit" class="submit-button" id="submit-new-camp-name">
-					</form>
-					<button id="close-edit-camp-name-popup" class="submit-button">Cancel</button>
-				</div>
-				<div class="close-camper-information">
-					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
-				</div>
-				<div class="camper-information-body"></div>
+			
+			<div class="message-background"></div>
+			<div class="message-alert">
+				<h1>Test Alert</h1>
 			</div>
-			<div class="log-popup">
-				<h1>Current Logs</h1>
-				<div class="close-logs">
-					<ion-icon class="icon-objects" name="close-circle-outline"></ion-icon>
-				</div>
-				<div class="logs-inventory"></div>
-			</div>
-		</div>
-		
-		<div class="message-background"></div>
-		<div class="message-alert">
-			<h1>Test Alert</h1>
-		</div>
-		<script src="/socket.io/socket.io.js"></script>
-		<script src="/admin.js"></script>
-	</body>
-</html>
+			<script src="/socket.io/socket.io.js"></script>
+			<script src="/admin.js"></script>
+		</body>
+	</html>

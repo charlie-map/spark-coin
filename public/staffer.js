@@ -242,7 +242,7 @@ function switch_background_image(current_item, old_background) {
 }
 
 $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function() {
-	if ($(this).css("background-image") == 'url("https://overfload.nyc3.cdn.digitaloceanspaces.com/b084ed39-4422-4d31-a1f6-7bf6a051d992")') {
+	if ($(this).css("background-image") == 'url("http://localhost:9988/trash.png")') {
 		// actually delete the item
 
 		$.ajax({
@@ -260,7 +260,7 @@ $(".inner-inventory").on("click", ".spark-logo-inventory.remove-hover", function
 	} else {
 		let current_background = $(this).css("background-image");
 
-		$(this).css("background-image", "url(https://overfload.nyc3.cdn.digitaloceanspaces.com/b084ed39-4422-4d31-a1f6-7bf6a051d992)");
+		$(this).css("background-image", "url(/trash.png)");
 
 		setTimeout(switch_background_image, 2500, this, current_background);
 	}
@@ -332,8 +332,6 @@ $(".watch-logs").click(function() {
 		all_logs.forEach(log => { // time for another object :D
 
 			let inventory_item;
-
-			console.log(log);
 
 			inventory_item = "<div>" +
 				"<div style='background-image: url(" + (log.image_url ? log.image_url : "https://overfload.nyc3.cdn.digitaloceanspaces.com/ed485a58-4e11-4940-9b58-9dafd0113a9d") + ")'" + "class='purchase-item-url spark-logo-inventory'></div>" +
